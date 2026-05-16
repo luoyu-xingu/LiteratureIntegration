@@ -57,3 +57,101 @@ impl From<neo4rs::DeError> for AppError {
         AppError::Neo4jError(err.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_workspace_not_found_display() {
+        let err = AppError::WorkspaceNotFound("ws-123".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("ws-123"));
+        assert!(msg.contains("Workspace not found"));
+    }
+
+    #[test]
+    fn test_paper_not_found_display() {
+        let err = AppError::PaperNotFound("paper-456".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("paper-456"));
+        assert!(msg.contains("Paper not found"));
+    }
+
+    #[test]
+    fn test_author_not_found_display() {
+        let err = AppError::AuthorNotFound("author-789".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("author-789"));
+    }
+
+    #[test]
+    fn test_import_failed_display() {
+        let err = AppError::ImportFailed("bad doi".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("bad doi"));
+    }
+
+    #[test]
+    fn test_validation_error_display() {
+        let err = AppError::ValidationError("missing field".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("missing field"));
+    }
+
+    #[test]
+    fn test_external_api_error_display() {
+        let err = AppError::ExternalApiError("timeout".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("timeout"));
+    }
+
+    #[test]
+    fn test_neo4j_error_display() {
+        let err = AppError::Neo4jError("connection refused".to_string());
+        let msg = err.to_string();
+        assert!(msg.contains("connection refused"));
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_workspace_not_found() {
+        let err = AppError::WorkspaceNotFound("ws-1".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_paper_not_found() {
+        let err = AppError::PaperNotFound("p-1".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_validation() {
+        let err = AppError::ValidationError("bad input".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_import_failed() {
+        let err = AppError::ImportFailed("doi not found".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_neo4j() {
+        let err = AppError::Neo4jError("db error".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn test_error_into_response_external_api() {
+        let err = AppError::ExternalApiError("api down".into());
+        let resp = err.into_response();
+        assert_eq!(resp.status(), StatusCode::BAD_GATEWAY);
+    }
+}

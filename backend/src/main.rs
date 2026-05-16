@@ -1,11 +1,6 @@
-mod config;
-mod errors;
-mod models;
-mod repositories;
-mod services;
-mod routes;
-
-use axum::{routing::{get, post, put, delete}, Router};
+use literature_integration::config;
+use literature_integration::routes;
+use axum::{routing::{get, post, delete}, Router};
 use neo4rs::Graph;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;

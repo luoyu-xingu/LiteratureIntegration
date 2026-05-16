@@ -1,4 +1,5 @@
 import { Descriptions, Tag } from 'antd';
+import ReactMarkdown from 'react-markdown';
 import type { PaperDetail as PaperDetailType } from '../types';
 
 interface Props {
@@ -20,7 +21,15 @@ export default function PaperDetail({ detail }: Props) {
       <Descriptions.Item label="关键词">
         {keywords.map((k) => <Tag key={k.id}>{k.name}</Tag>)}
       </Descriptions.Item>
-      <Descriptions.Item label="Abstract">{paper.abstract_text}</Descriptions.Item>
+      <Descriptions.Item label="Abstract">
+        {paper.abstract_text ? (
+          <div className="markdown-body" style={{ lineHeight: 1.7 }}>
+            <ReactMarkdown>{paper.abstract_text}</ReactMarkdown>
+          </div>
+        ) : (
+          '暂无'
+        )}
+      </Descriptions.Item>
     </Descriptions>
   );
 }
