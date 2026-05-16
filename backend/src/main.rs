@@ -8,6 +8,7 @@ mod routes;
 use axum::{routing::{get, post, put, delete}, Router};
 use neo4rs::Graph;
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
@@ -41,6 +42,7 @@ async fn main() {
         .route("/api/workspaces/{workspace_id}/search", get(routes::search::search))
         .route("/api/workspaces/{workspace_id}/export", post(routes::export::export_workspace))
         .route("/api/authors/{id}/papers", get(routes::author::get_author_papers))
+        .fallback_service(ServeDir::new("../frontend/dist").append_index_html_on_directories(true))
         .with_state(graph)
         .layer(cors);
 
