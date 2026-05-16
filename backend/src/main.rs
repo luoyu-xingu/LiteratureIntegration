@@ -10,6 +10,21 @@ use neo4rs::Graph;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
+async fn keepalive(graph: Graph) {
+    loop {
+        tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+        let query = neo4rs::query("RETURN 1 AS keepalive");
+        match graph.execute(query).await {
+            Ok(mut result) => {
+                let _ = result.next().await;
+            }
+            Err(e) => {
+                tracing::warn!("Keepalive failed: {}, will retry next cycle", e);
+            }
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
@@ -19,6 +34,8 @@ async fn main() {
     let graph = config::create_neo4j_pool(&cfg)
         .await
         .expect("Failed to connect to Neo4j");
+
+    tokio::spawn(keepalive(graph.clone()));
 
     let cors = CorsLayer::permissive();
 
