@@ -22,26 +22,21 @@ async fn main() {
 
     let cors = CorsLayer::permissive();
 
-    let workspace_routes = Router::new()
-        .route("/", post(routes::workspace::create_workspace).get(routes::workspace::list_workspaces))
-        .route("/{id}", get(routes::workspace::get_workspace).put(routes::workspace::update_workspace).delete(routes::workspace::delete_workspace));
-
-    let paper_routes = Router::new()
-        .route("/", post(routes::paper::import_paper).get(routes::paper::list_papers))
-        .route("/{id}", get(routes::paper::get_paper).put(routes::paper::update_paper).delete(routes::paper::delete_paper));
-
-    let author_routes = Router::new()
-        .route("/", get(routes::author::list_authors))
-        .route("/graph", get(routes::author::get_graph));
+    let workspace_detail = Router::new()
+        .route("/", get(routes::workspace::get_workspace).put(routes::workspace::update_workspace).delete(routes::workspace::delete_workspace))
+        .route("/papers", get(routes::paper::list_papers).post(routes::paper::import_paper))
+        .route("/papers/:paper_id", delete(routes::paper::delete_paper))
+        .route("/authors", get(routes::author::list_authors))
+        .route("/authors/graph", get(routes::author::get_graph))
+        .route("/search", get(routes::search::search))
+        .route("/export", post(routes::export::export_workspace));
 
     let app = Router::new()
         .route("/api/health", get(|| async { "ok" }))
-        .nest("/api/workspaces", workspace_routes)
-        .nest("/api/workspaces/{workspace_id}/papers", paper_routes)
-        .nest("/api/workspaces/{workspace_id}/authors", author_routes)
-        .route("/api/workspaces/{workspace_id}/search", get(routes::search::search))
-        .route("/api/workspaces/{workspace_id}/export", post(routes::export::export_workspace))
-        .route("/api/authors/{id}/papers", get(routes::author::get_author_papers))
+        .route("/api/workspaces", get(routes::workspace::list_workspaces).post(routes::workspace::create_workspace))
+        .nest("/api/workspaces/:workspace_id", workspace_detail)
+        .route("/api/papers/:id", get(routes::paper::get_paper).put(routes::paper::update_paper))
+        .route("/api/authors/:id/papers", get(routes::author::get_author_papers))
         .fallback_service(ServeDir::new("../frontend/dist").append_index_html_on_directories(true))
         .with_state(graph)
         .layer(cors);
