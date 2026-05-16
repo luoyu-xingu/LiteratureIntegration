@@ -2,8 +2,31 @@ use neo4rs::Graph;
 use crate::models::workspace::Workspace;
 use crate::errors::AppError;
 
+fn is_session_token_error(err: &neo4rs::Error) -> bool {
+    let msg = err.to_string().to_lowercase();
+    msg.contains("invalid session token") || (msg.contains("session") && msg.contains("token"))
+}
+
 pub struct Neo4jRepo {
     graph: Graph,
+}
+
+macro_rules! run_query {
+    ($self:expr, $query:expr) => {{
+        let mut attempts = 0u32;
+        loop {
+            match $self.graph.execute($query.clone()).await {
+                Ok(stream) => break stream,
+                Err(e) if is_session_token_error(&e) && attempts < 3 => {
+                    attempts += 1;
+                    tracing::warn!("Invalid session token, retrying (attempt {}/3)", attempts);
+                    tokio::time::sleep(std::time::Duration::from_millis(200 * attempts as u64)).await;
+                    continue;
+                }
+                Err(e) => return Err(AppError::from(e)),
+            }
+        }
+    }};
 }
 
 impl Neo4jRepo {
@@ -20,7 +43,7 @@ impl Neo4jRepo {
         .param("description", description)
         .param("created_at", created_at);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let row = result.next().await?.ok_or_else(|| AppError::Neo4jError("No row returned".into()))?;
         let node: neo4rs::Node = row.get("w")?;
         Ok(workspace_from_node(&node))
@@ -28,7 +51,7 @@ impl Neo4jRepo {
 
     pub async fn list_workspaces(&self) -> Result<Vec<Workspace>, AppError> {
         let query = neo4rs::query("MATCH (w:Workspace) RETURN w ORDER BY w.created_at DESC");
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut workspaces = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("w")?;
@@ -39,7 +62,7 @@ impl Neo4jRepo {
 
     pub async fn get_workspace(&self, id: &str) -> Result<Option<Workspace>, AppError> {
         let query = neo4rs::query("MATCH (w:Workspace {id: $id}) RETURN w").param("id", id);
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("w")?;
             Ok(Some(workspace_from_node(&node)))
@@ -56,7 +79,7 @@ impl Neo4jRepo {
         .param("name", name)
         .param("description", description);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("w")?;
             Ok(Some(workspace_from_node(&node)))
@@ -71,7 +94,7 @@ impl Neo4jRepo {
         )
         .param("id", id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let deleted: i64 = row.get("deleted")?;
             Ok(deleted > 0)
@@ -106,7 +129,7 @@ impl Neo4jRepo {
         .param("journal", journal.unwrap_or(""))
         .param("created_at", created_at);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let row = result.next().await?.ok_or_else(|| AppError::Neo4jError("No row returned".into()))?;
         let node: neo4rs::Node = row.get("p")?;
         Ok(paper_from_node(&node))
@@ -120,7 +143,8 @@ impl Neo4jRepo {
         .param("workspace_id", workspace_id)
         .param("paper_id", paper_id)
         .param("added_at", added_at);
-        self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
         Ok(())
     }
 
@@ -139,7 +163,7 @@ impl Neo4jRepo {
         .param("name", name)
         .param("orcid", orcid.unwrap_or(""));
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let row = result.next().await?.ok_or_else(|| AppError::Neo4jError("No row returned".into()))?;
         let node: neo4rs::Node = row.get("a")?;
         Ok(author_from_node(&node))
@@ -152,7 +176,8 @@ impl Neo4jRepo {
         )
         .param("author_id", author_id)
         .param("paper_id", paper_id);
-        self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
         Ok(())
     }
 
@@ -163,7 +188,8 @@ impl Neo4jRepo {
         )
         .param("author_id", author_id)
         .param("paper_id", paper_id);
-        self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
         Ok(())
     }
 
@@ -177,7 +203,8 @@ impl Neo4jRepo {
         .param("author1_id", author1_id)
         .param("author2_id", author2_id)
         .param("workspace_id", workspace_id);
-        self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
         Ok(())
     }
 
@@ -191,7 +218,8 @@ impl Neo4jRepo {
         .param("id", id)
         .param("name", name)
         .param("paper_id", paper_id);
-        self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
         Ok(())
     }
 
@@ -201,7 +229,7 @@ impl Neo4jRepo {
         )
         .param("workspace_id", workspace_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut papers = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
@@ -212,7 +240,7 @@ impl Neo4jRepo {
 
     pub async fn get_paper(&self, id: &str) -> Result<Option<crate::models::paper::Paper>, AppError> {
         let query = neo4rs::query("MATCH (p:Paper {id: $id}) RETURN p").param("id", id);
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             Ok(Some(paper_from_node(&node)))
@@ -228,7 +256,7 @@ impl Neo4jRepo {
         .param("id", id)
         .param("user_notes", user_notes);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             Ok(Some(paper_from_node(&node)))
@@ -244,7 +272,7 @@ impl Neo4jRepo {
         .param("workspace_id", workspace_id)
         .param("paper_id", paper_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let deleted: i64 = row.get("deleted")?;
             Ok(deleted > 0)
@@ -259,7 +287,7 @@ impl Neo4jRepo {
         )
         .param("paper_id", paper_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("a")?;
             Ok(Some(author_from_node(&node)))
@@ -274,7 +302,7 @@ impl Neo4jRepo {
         )
         .param("paper_id", paper_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("a")?;
             Ok(Some(author_from_node(&node)))
@@ -289,7 +317,7 @@ impl Neo4jRepo {
         )
         .param("paper_id", paper_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut keywords = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("k")?;
@@ -305,7 +333,7 @@ impl Neo4jRepo {
         )
         .param("workspace_id", workspace_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut authors = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("a")?;
@@ -320,7 +348,7 @@ impl Neo4jRepo {
         )
         .param("author_id", author_id);
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut papers = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
@@ -339,7 +367,7 @@ impl Neo4jRepo {
         )
         .param("workspace_id", workspace_id);
 
-        let mut result = self.graph.execute(nodes_query).await?;
+        let mut result = run_query!(self, nodes_query);
         let mut nodes = Vec::new();
         while let Some(row) = result.next().await? {
             nodes.push(crate::models::dto::GraphNode {
@@ -357,7 +385,7 @@ impl Neo4jRepo {
         )
         .param("workspace_id", workspace_id);
 
-        let mut link_result = self.graph.execute(links_query).await?;
+        let mut link_result = run_query!(self, links_query);
         let mut links = Vec::new();
         while let Some(row) = link_result.next().await? {
             links.push(crate::models::dto::GraphLink {
@@ -375,11 +403,11 @@ impl Neo4jRepo {
                       WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query \
                       OR EXISTS { MATCH (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE k.name CONTAINS $query } \
                       RETURN p ORDER BY p.year DESC";
-        let q = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("query", query_str);
 
-        let mut result = self.graph.execute(q).await?;
+        let mut result = run_query!(self, query);
         let mut papers = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
@@ -392,11 +420,11 @@ impl Neo4jRepo {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author) \
                       WHERE a.name CONTAINS $author_name \
                       RETURN a, collect(p) AS papers ORDER BY size(papers) DESC";
-        let q = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("author_name", author_name);
 
-        let mut result = self.graph.execute(q).await?;
+        let mut result = run_query!(self, query);
         let mut authors_with_papers = Vec::new();
         while let Some(row) = result.next().await? {
             let author_node: neo4rs::Node = row.get("a")?;
@@ -438,7 +466,7 @@ impl Neo4jRepo {
             query = query.param("keyword_ids", kids);
         }
 
-        let mut result = self.graph.execute(query).await?;
+        let mut result = run_query!(self, query);
         let mut papers = Vec::new();
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
