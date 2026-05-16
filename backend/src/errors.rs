@@ -51,3 +51,9 @@ impl From<neo4rs::Error> for AppError {
         AppError::Neo4jError(err.to_string())
     }
 }
+
+impl From<neo4rs::DeError> for AppError {
+    fn from(err: neo4rs::DeError) -> Self {
+        AppError::Neo4jError(err.to_string())
+    }
+}
