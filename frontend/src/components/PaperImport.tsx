@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, Input, message } from 'antd';
+import { ImportOutlined } from '@ant-design/icons';
 import { importPaper } from '../api/paper';
 
 interface Props {
@@ -31,16 +32,43 @@ export default function PaperImport({ workspaceId, open, onClose, onImported }: 
   };
 
   return (
-    <Modal title="导入论文" open={open} onOk={handleOk} onCancel={onClose} confirmLoading={loading}>
-      <div style={{ marginBottom: 12 }}>
+    <Modal
+      title={
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ImportOutlined style={{ color: 'var(--accent)' }} />
+          导入论文
+        </span>
+      }
+      open={open}
+      onOk={handleOk}
+      onCancel={onClose}
+      confirmLoading={loading}
+    >
+      <div style={{ marginBottom: 16 }}>
         <Input
           placeholder="输入 DOI 或 arXiv ID"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
+          size="large"
+          style={{ fontSize: 15 }}
         />
       </div>
-      <div style={{ color: '#999', fontSize: 12 }}>
-        示例: DOI: 10.1038/s41586-020-2649-2 | arXiv: 2301.12345
+      <div
+        style={{
+          color: 'var(--text-muted)',
+          fontSize: 13,
+          lineHeight: 1.6,
+          background: 'var(--bg-elevated)',
+          padding: '12px 16px',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div style={{ fontWeight: 500, marginBottom: 4, color: 'var(--text-secondary)' }}>
+          支持的格式：
+        </div>
+        <div>• DOI: <code style={{ color: 'var(--accent)' }}>10.1038/s41586-020-2649-2</code></div>
+        <div>• arXiv: <code style={{ color: 'var(--accent)' }}>2301.12345</code></div>
       </div>
     </Modal>
   );

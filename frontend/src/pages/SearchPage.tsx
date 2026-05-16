@@ -9,11 +9,20 @@ export default function SearchPage() {
   const { results, mode, loading, search } = useSearch(id);
 
   return (
-    <div>
-      <h2>搜索</h2>
+    <div className="animate-fade-in">
+      <h2
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 28,
+          fontWeight: 700,
+          marginBottom: 24,
+        }}
+      >
+        搜索论文
+      </h2>
       <SearchBar onSearch={search} loading={loading} />
       <SearchResult results={results} mode={mode} />
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 32 }}>
         {id && <ExportPanel workspaceId={id} />}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Input, Button, message } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import { EditOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { updatePaper } from '../api/paper';
 
@@ -8,11 +8,6 @@ interface Props {
   paperId: string;
   initialNotes: string;
 }
-
-const markdownStyles: React.CSSProperties = {
-  lineHeight: 1.7,
-  color: '#333',
-};
 
 export default function PaperNotes({ paperId, initialNotes }: Props) {
   const [notes, setNotes] = useState(initialNotes);
@@ -33,40 +28,104 @@ export default function PaperNotes({ paperId, initialNotes }: Props) {
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: 8, fontWeight: 'bold' }}>我的笔记:</div>
+    <div className="animate-fade-in">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 13,
+            color: 'var(--text-secondary)',
+            fontWeight: 500,
+          }}
+        >
+          <EditOutlined style={{ color: 'var(--accent)' }} />
+          我的笔记
+        </div>
+        {!editing && notes && (
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => setEditing(true)}
+          >
+            编辑
+          </Button>
+        )}
+      </div>
+
       {editing ? (
-        <>
+        <div>
           <Input.TextArea
             rows={8}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="支持 Markdown 格式，例如：&#10;# 标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用"
+            style={{ marginBottom: 12 }}
           />
-          <div style={{ marginTop: 8 }}>
-            <Button type="primary" loading={saving} onClick={handleSave}>保存</Button>
-            <Button style={{ marginLeft: 8 }} onClick={() => { setEditing(false); setNotes(initialNotes); }}>取消</Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={handleSave}
+              size="small"
+            >
+              保存
+            </Button>
+            <Button
+              icon={<CloseOutlined />}
+              onClick={() => {
+                setEditing(false);
+                setNotes(initialNotes);
+              }}
+              size="small"
+            >
+              取消
+            </Button>
           </div>
-        </>
+        </div>
       ) : (
         <div
+          onClick={() => setEditing(true)}
           style={{
             cursor: 'pointer',
-            minHeight: 40,
-            padding: 16,
-            background: '#fafafa',
-            borderRadius: 8,
-            border: '1px solid #f0f0f0',
-            position: 'relative',
+            minHeight: 60,
+            padding: notes ? 20 : 24,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            transition: 'all var(--transition)',
           }}
-          onClick={() => setEditing(true)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border-light)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border)';
+          }}
         >
           {notes ? (
-            <div style={markdownStyles} className="markdown-body">
+            <div className="markdown-body">
               <ReactMarkdown>{notes}</ReactMarkdown>
             </div>
           ) : (
-            <div style={{ color: '#bbb', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div
+              style={{
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 14,
+              }}
+            >
               <EditOutlined />
               点击添加笔记（支持 Markdown 格式）
             </div>

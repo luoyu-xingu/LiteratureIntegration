@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tabs, Button, Space } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, FileTextOutlined, ApartmentOutlined } from '@ant-design/icons';
 import PaperList from '../components/PaperList';
 import PaperImport from '../components/PaperImport';
 import AuthorGraph from '../components/AuthorGraph';
@@ -14,20 +14,62 @@ export default function WorkspaceDetail() {
   const [activeTab, setActiveTab] = useState('papers');
 
   return (
-    <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0 }}>工作区详情</h2>
+    <div className="animate-fade-in">
+      <div
+        style={{
+          marginBottom: 24,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 28,
+            fontWeight: 700,
+            margin: 0,
+          }}
+        >
+          工作区详情
+        </h2>
         <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowImport(true)}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setShowImport(true)}
+          >
             导入论文
           </Button>
         </Space>
       </div>
 
-      <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
-        { key: 'papers', label: '论文列表', children: <PaperList papers={papers} loading={loading} /> },
-        { key: 'graph', label: '作者网络图', children: id ? <AuthorGraph workspaceId={id} /> : null },
-      ]} />
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'papers',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FileTextOutlined />
+                论文列表
+              </span>
+            ),
+            children: <PaperList papers={papers} loading={loading} />,
+          },
+          {
+            key: 'graph',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <ApartmentOutlined />
+                作者网络图
+              </span>
+            ),
+            children: id ? <AuthorGraph workspaceId={id} /> : null,
+          },
+        ]}
+      />
 
       {id && (
         <PaperImport
