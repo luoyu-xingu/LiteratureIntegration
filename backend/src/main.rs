@@ -1,3 +1,6 @@
+pub mod models;
+pub mod errors;
+
 use axum::{routing::get, Router};
 use tower_http::cors::CorsLayer;
 
