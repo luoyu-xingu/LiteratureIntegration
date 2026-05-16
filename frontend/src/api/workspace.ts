@@ -6,9 +6,9 @@ export const createWorkspace = (data: { name: string; description?: string }) =>
 
 export const listWorkspaces = () => get<Workspace[]>('/workspaces');
 
-export const getWorkspace = (id: string) => get<Workspace>(`/workspaces/${id}`);
+export const getWorkspace = (id: string) => get<Workspace>(`/workspace/${id}`);
 
 export const updateWorkspace = (id: string, data: { name?: string; description?: string }) =>
-  put<Workspace>(`/workspaces/${id}`, data);
+  put<Workspace>(`/workspace/${id}`, data);
 
-export const deleteWorkspace = (id: string) => del<{ deleted: boolean }>(`/workspaces/${id}`);
+export const deleteWorkspace = (id: string) => del<{ deleted: boolean }>(`/workspace/${id}`);
