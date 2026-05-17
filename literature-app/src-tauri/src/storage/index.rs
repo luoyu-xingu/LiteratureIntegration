@@ -32,17 +32,18 @@ pub fn write_index(root: &PathBuf, index: &RootIndex) -> Result<()> {
 }
 
 pub fn ensure_index(root: &PathBuf) -> Result<RootIndex> {
-    let index = read_index(root)?;
-    if !get_index_path(root).exists() {
+    let path = get_index_path(root);
+    if !path.exists() {
         let new_index = RootIndex {
             version: 1,
             root: root.to_string_lossy().to_string(),
             workspaces: vec![],
         };
         write_index(root, &new_index)?;
-        return Ok(new_index);
+        Ok(new_index)
+    } else {
+        read_index(root)
     }
-    Ok(index)
 }
 
 pub fn get_root_dir(state: &crate::storage::AppState) -> Result<PathBuf> {

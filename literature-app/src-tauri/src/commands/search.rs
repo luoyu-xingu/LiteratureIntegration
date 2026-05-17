@@ -69,18 +69,16 @@ pub async fn search(workspace_id: String, query: String, mode: String, state: St
 
 fn matches_keyword(paper: &Paper, terms: &[String]) -> bool {
     terms.iter().all(|term| {
-        let t = term.to_lowercase();
-        paper.title.to_lowercase().contains(&t)
-            || paper.keywords.iter().any(|k| k.to_lowercase().contains(&t))
-            || paper.journal.as_ref().map_or(false, |j| j.to_lowercase().contains(&t))
+        paper.title.to_lowercase().contains(term)
+            || paper.keywords.iter().any(|k| k.to_lowercase().contains(term))
+            || paper.journal.as_ref().map_or(false, |j| j.to_lowercase().contains(term))
     })
 }
 
 fn matches_author(paper: &Paper, terms: &[String]) -> bool {
     terms.iter().all(|term| {
-        let t = term.to_lowercase();
-        paper.first_author.as_ref().map_or(false, |a| a.to_lowercase().contains(&t))
-            || paper.corresponding_author.as_ref().map_or(false, |a| a.to_lowercase().contains(&t))
+        paper.first_author.as_ref().map_or(false, |a| a.to_lowercase().contains(term))
+            || paper.corresponding_author.as_ref().map_or(false, |a| a.to_lowercase().contains(term))
     })
 }
 
@@ -94,5 +92,5 @@ fn matches_content(detail: &crate::models::paper::PaperDetailResponse, terms: &[
         detail.paper.corresponding_author.as_deref().unwrap_or(""),
     ).to_lowercase();
 
-    terms.iter().all(|term| full_text.contains(&term.to_lowercase()))
+    terms.iter().all(|term| full_text.contains(term))
 }

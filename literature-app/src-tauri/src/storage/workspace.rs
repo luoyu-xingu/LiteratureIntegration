@@ -96,6 +96,9 @@ pub fn update_workspace(root: &PathBuf, workspace_id: &str, name: Option<String>
             std::fs::rename(&old_dir, &new_dir)
                 .context("Failed to rename workspace directory")?;
         }
+        let yaml_path = get_workspace_yaml(root, &new_path);
+        let updated_content = serde_yaml::to_string(&ws)?;
+        std::fs::write(&yaml_path, updated_content)?;
         update_workspace_in_index(root, workspace_id, &ws.name, &new_path)?;
     } else {
         let updated_content = serde_yaml::to_string(&ws)?;

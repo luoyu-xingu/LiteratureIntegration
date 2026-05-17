@@ -2,7 +2,7 @@ use crate::models::paper::Paper;
 use super::ImportResult;
 
 pub async fn fetch_by_arxiv_id(arxiv_id: &str) -> anyhow::Result<ImportResult> {
-    let url = format!("http://export.arxiv.org/api/query?id_list={}", arxiv_id);
+    let url = format!("https://export.arxiv.org/api/query?id_list={}", arxiv_id);
     let client = reqwest::Client::new();
     let resp = client.get(&url).send().await?;
 

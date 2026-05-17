@@ -187,5 +187,10 @@ pub fn sanitize_filename(title: &str) -> String {
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join("-");
-    if result.len() > 80 { result[..80].trim_end_matches('-').to_string() } else { result }
+    if result.chars().count() > 80 {
+        let truncated: String = result.chars().take(80).collect();
+        truncated.trim_end_matches('-').to_string()
+    } else {
+        result
+    }
 }

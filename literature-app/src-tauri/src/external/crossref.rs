@@ -16,6 +16,7 @@ struct CrossrefMessage {
     #[serde(rename = "container-title")]
     container_title: Option<Vec<String>>,
     author: Option<Vec<CrossrefAuthor>>,
+    #[serde(rename = "abstract")]
     abstract_text: Option<String>,
 }
 
