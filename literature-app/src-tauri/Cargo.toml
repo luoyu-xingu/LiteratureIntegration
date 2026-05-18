@@ -1,0 +1,25 @@
+[package]
+name = "literature-app"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "literature_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1"
+gray_matter = "0.2"
+reqwest = { version = "0.12", features = ["json"] }
+uuid = { version = "1", features = ["v4"] }
+anyhow = "1"
+tokio = { version = "1", features = ["fs", "io-util"] }
+chrono = { version = "0.4", features = ["serde"] }
