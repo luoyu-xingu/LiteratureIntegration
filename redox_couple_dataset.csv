@@ -1,0 +1,547 @@
+entry_id,redox_couple,oxidized_species,reduced_species,E0_V_vs_SHE,pH,temperature_K,oxidized_MP_ID,reduced_MP_ID,oxidized_spacegroup,reduced_spacegroup,oxidized_crystal_system,reduced_crystal_system,reference_DOI,half_reaction
+1,Li+/Li,Li+,Li,-3.04,0.0,298.15,mp-2664,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Li+ + ne- -> Li
+2,K+/K,K+,K,-2.931,0.0,298.15,mp-1353,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,K+ + ne- -> K
+3,Rb+/Rb,Rb+,Rb,-2.98,0.0,298.15,mp-1353,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Rb+ + ne- -> Rb
+4,Cs+/Cs,Cs+,Cs,-3.026,0.0,298.15,mp-1352,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Cs+ + ne- -> Cs
+5,Ba2+/Ba,Ba2+,Ba,-2.912,0.0,298.15,mp-1526,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Ba2+ + ne- -> Ba
+6,Sr2+/Sr,Sr2+,Sr,-2.899,0.0,298.15,mp-1525,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Sr2+ + ne- -> Sr
+7,Ca2+/Ca,Ca2+,Ca,-2.868,0.0,298.15,mp-1524,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Ca2+ + ne- -> Ca
+8,Na+/Na,Na+,Na,-2.71,0.0,298.15,mp-1018,mp-1018,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Na+ + ne- -> Na
+9,Mg2+/Mg,Mg2+,Mg,-2.372,0.0,298.15,mp-153,mp-1104,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Mg2+ + ne- -> Mg
+10,Be2+/Be,Be2+,Be,-1.847,0.0,298.15,mp-1523,mp-87,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Be2+ + ne- -> Be
+11,Al3+/Al,Al3+,Al,-1.662,0.0,298.15,mp-2664,mp-134,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Al3+ + ne- -> Al
+12,Mn2+/Mn,Mn2+,Mn,-1.18,0.0,298.15,mp-19017,mp-1018,Pnma,I-43m,Orthorhombic,Cubic,10.1063/1.555839,Mn2+ + ne- -> Mn
+13,Zn2+/Zn,Zn2+,Zn,-0.762,0.0,298.15,mp-794,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn2+ + ne- -> Zn
+14,Cr3+/Cr,Cr3+,Cr,-0.744,0.0,298.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Cr3+ + ne- -> Cr
+15,Fe2+/Fe,Fe2+,Fe,-0.447,0.0,298.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe2+ + ne- -> Fe
+16,Cd2+/Cd,Cd2+,Cd,-0.403,0.0,298.15,mp-1519,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd2+ + ne- -> Cd
+17,Co2+/Co,Co2+,Co,-0.28,0.0,298.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co2+ + ne- -> Co
+18,Ni2+/Ni,Ni2+,Ni,-0.257,0.0,298.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni2+ + ne- -> Ni
+19,Sn2+/Sn,Sn2+,Sn,-0.14,0.0,298.15,mp-117,mp-1018,P63/mmc,I41/amd,Hexagonal,Tetragonal,10.1063/1.555839,Sn2+ + ne- -> Sn
+20,Pb2+/Pb,Pb2+,Pb,-0.126,0.0,298.15,mp-1518,mp-1018,P63/mmc,Fm-3m,Hexagonal,Cubic,10.1063/1.555839,Pb2+ + ne- -> Pb
+21,H+/H2,H+,H2,0.0,0.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+ + ne- -> H2
+22,Cu2+/Cu,Cu2+,Cu,0.342,0.0,298.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+ + ne- -> Cu
+23,Cu+/Cu,Cu+,Cu,0.521,0.0,298.15,mp-1833,mp-30,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Cu+ + ne- -> Cu
+24,Fe3+/Fe2+,Fe3+,Fe2+,0.771,0.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+ + ne- -> Fe2+
+25,Ag+/Ag,Ag+,Ag,0.799,0.0,298.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+ + ne- -> Ag
+26,Pd2+/Pd,Pd2+,Pd,0.951,0.0,298.15,mp-4,mp-2,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Pd2+ + ne- -> Pd
+27,Pt2+/Pt,Pt2+,Pt,1.18,0.0,298.15,mp-126,mp-126,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Pt2+ + ne- -> Pt
+28,Au3+/Au,Au3+,Au,1.498,0.0,298.15,mp-12681,mp-81,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Au3+ + ne- -> Au
+29,Au+/Au,Au+,Au,1.692,0.0,298.15,mp-12681,mp-81,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Au+ + ne- -> Au
+30,Ce4+/Ce3+,Ce4+,Ce3+,1.61,0.0,298.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Ce4+ + ne- -> Ce3+
+31,Co3+/Co2+,Co3+,Co2+,1.92,0.0,298.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Co3+ + ne- -> Co2+
+32,Cr2O7(2-)/Cr3+,Cr2O7(2-),Cr3+,1.33,0.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-) + ne- -> Cr3+
+33,MnO4-/Mn2+,MnO4-,Mn2+,1.507,0.0,298.15,mp-6773,mp-19017,Cmcm,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,MnO4- + ne- -> Mn2+
+34,MnO4-/MnO2,MnO4-,MnO2,1.679,0.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4- + ne- -> MnO2
+35,PbO2/Pb2+,PbO2,Pb2+,1.455,0.0,298.15,mp-20529,mp-1518,P4_2/mnm,P63/mmc,Tetragonal,Hexagonal,10.1063/1.555839,PbO2 + ne- -> Pb2+
+36,VO2+/VO2+,VO2+,VO2+,1.0,0.0,298.15,mp-19094,mp-6773,I4/mmm,Cmcm,Tetragonal,Orthorhombic,10.1063/1.555839,VO2+ + ne- -> VO2+
+37,V3+/V2+,V3+,V2+,-0.255,0.0,298.15,mp-19365,mp-19364,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,V3+ + ne- -> V2+
+38,Ti3+/Ti2+,Ti3+,Ti2+,-0.369,0.0,298.15,mp-19359,mp-6773,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,Ti3+ + ne- -> Ti2+
+39,Ti2+/Ti,Ti2+,Ti,-1.63,0.0,298.15,mp-6773,mp-72,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Ti2+ + ne- -> Ti
+40,Sn4+/Sn2+,Sn4+,Sn2+,0.15,0.0,298.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1063/1.555839,Sn4+ + ne- -> Sn2+
+41,Hg2+/Hg,Hg2+,Hg,0.851,0.0,298.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2+ + ne- -> Hg
+42,Fe(CN)6(3-)/Fe(CN)6(4-),Fe(CN)6(3-),Fe(CN)6(4-),0.358,0.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Fe(CN)6(3-) + ne- -> Fe(CN)6(4-)
+43,Mn3+/Mn2+,Mn3+,Mn2+,1.51,0.0,298.15,mp-19017,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Mn3+ + ne- -> Mn2+
+44,Ni3+/Ni2+,Ni3+,Ni2+,1.593,0.0,298.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Ni3+ + ne- -> Ni2+
+45,Cr3+/Cr2+,Cr3+,Cr2+,-0.407,0.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr3+ + ne- -> Cr2+
+46,Mo3+/Mo,Mo3+,Mo,-0.2,0.0,298.15,mp-29,mp-29,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Mo3+ + ne- -> Mo
+47,W3+/W,W3+,W,0.1,0.0,298.15,mp-19,mp-19,Im-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,W3+ + ne- -> W
+48,AgCl/Ag,AgCl,Ag,0.222,0.0,298.15,mp-22917,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,AgCl + ne- -> Ag
+49,AgBr/Ag,AgBr,Ag,0.071,0.0,298.15,mp-22918,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,AgBr + ne- -> Ag
+50,AgI/Ag,AgI,Ag,-0.152,0.0,298.15,mp-22919,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,AgI + ne- -> Ag
+51,Cu2+/Cu+,Cu2+,Cu+,0.153,0.0,298.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+ + ne- -> Cu+
+52,Fe3+/Fe,Fe3+,Fe,-0.037,0.0,298.15,mp-19770,mp-13,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+ + ne- -> Fe
+53,I2/I-,I2,I-,0.536,0.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2 + ne- -> I-
+54,Br2/Br-,Br2,Br-,1.087,0.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2 + ne- -> Br-
+55,Cl2/Cl-,Cl2,Cl-,1.358,0.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2 + ne- -> Cl-
+56,F2/F-,F2,F-,2.866,0.0,298.15,mp-23152,mp-23207,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,F2 + ne- -> F-
+57,O2/H2O,O2,H2O,1.229,0.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2 + ne- -> H2O
+58,O2/H2O2,O2,H2O2,0.695,0.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2 + ne- -> H2O2
+59,H2O2/H2O,H2O2,H2O,1.763,0.0,298.15,mp-69705,mp-69705,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1063/1.555839,H2O2 + ne- -> H2O
+60,S2O8(2-)/SO4(2-),S2O8(2-),SO4(2-),2.01,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,S2O8(2-) + ne- -> SO4(2-)
+61,NO3-/NO2-,NO3-,NO2-,0.94,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,NO3- + ne- -> NO2-
+62,ClO4-/Cl-,ClO4-,Cl-,1.389,0.0,298.15,mp-6773,mp-23208,Cmcm,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,ClO4- + ne- -> Cl-
+63,ClO3-/Cl-,ClO3-,Cl-,1.451,0.0,298.15,mp-6773,mp-23208,Cmcm,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,ClO3- + ne- -> Cl-
+64,BrO3-/Br-,BrO3-,Br-,1.423,0.0,298.15,mp-6773,mp-23209,Cmcm,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,BrO3- + ne- -> Br-
+65,IO3-/I-,IO3-,I-,1.195,0.0,298.15,mp-6773,mp-23210,Cmcm,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,IO3- + ne- -> I-
+66,Ru3+/Ru2+,Ru3+,Ru2+,0.249,0.0,298.15,mp-864,mp-864,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Ru3+ + ne- -> Ru2+
+67,Rh3+/Rh2+,Rh3+,Rh2+,0.758,0.0,298.15,mp-33,mp-33,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Rh3+ + ne- -> Rh2+
+68,Ir3+/Ir2+,Ir3+,Ir2+,0.97,0.0,298.15,mp-101,mp-101,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ir3+ + ne- -> Ir2+
+69,Os3+/Os2+,Os3+,Os2+,0.7,0.0,298.15,mp-103,mp-103,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Os3+ + ne- -> Os2+
+70,Tl3+/Tl+,Tl3+,Tl+,1.252,0.0,298.15,mp-1518,mp-1518,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Tl3+ + ne- -> Tl+
+71,Tl+/Tl,Tl+,Tl,-0.336,0.0,298.15,mp-1518,mp-1518,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Tl+ + ne- -> Tl
+72,In3+/In,In3+,In,-0.338,0.0,298.15,mp-1018,mp-1018,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,In3+ + ne- -> In
+73,Ga3+/Ga,Ga3+,Ga,-0.549,0.0,298.15,mp-1018,mp-1018,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,Ga3+ + ne- -> Ga
+74,Ge4+/Ge,Ge4+,Ge,0.124,0.0,298.15,mp-31,mp-31,Fd-3m,Fd-3m,Cubic,Cubic,10.1063/1.555839,Ge4+ + ne- -> Ge
+75,Sb3+/Sb,Sb3+,Sb,0.152,0.0,298.15,mp-104,mp-104,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1063/1.555839,Sb3+ + ne- -> Sb
+76,Bi3+/Bi,Bi3+,Bi,0.308,0.0,298.15,mp-1018,mp-1018,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1063/1.555839,Bi3+ + ne- -> Bi
+77,Te4+/Te,Te4+,Te,0.568,0.0,298.15,mp-19,mp-19,P3_121,P3_121,Trigonal,Trigonal,10.1063/1.555839,Te4+ + ne- -> Te
+78,Se4+/Se,Se4+,Se,0.74,0.0,298.15,mp-19,mp-19,P3_121,P3_121,Trigonal,Trigonal,10.1063/1.555839,Se4+ + ne- -> Se
+79,Eu3+/Eu2+,Eu3+,Eu2+,-0.35,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Eu3+ + ne- -> Eu2+
+80,Yb3+/Yb2+,Yb3+,Yb2+,-1.15,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Yb3+ + ne- -> Yb2+
+81,Sm3+/Sm2+,Sm3+,Sm2+,-1.55,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Sm3+ + ne- -> Sm2+
+82,V4+/V3+,V4+,V3+,0.337,0.0,298.15,mp-19094,mp-19365,I4_1/a,R-3c,Tetragonal,Rhombohedral,10.1063/1.555839,V4+ + ne- -> V3+
+83,V2+/V,V2+,V,-1.13,0.0,298.15,mp-19364,mp-72,P63/mmc,Im-3m,Hexagonal,Cubic,10.1063/1.555839,V2+ + ne- -> V
+84,Mo4+/Mo3+,Mo4+,Mo3+,0.02,0.0,298.15,mp-19006,mp-29,P2_1/c,Im-3m,Monoclinic,Cubic,10.1063/1.555839,Mo4+ + ne- -> Mo3+
+85,W4+/W3+,W4+,W3+,-0.03,0.0,298.15,mp-19006,mp-19,P2_1/c,Im-3m,Monoclinic,Cubic,10.1063/1.555839,W4+ + ne- -> W3+
+86,Pt4+/Pt2+,Pt4+,Pt2+,1.15,0.0,298.15,mp-126,mp-126,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Pt4+ + ne- -> Pt2+
+87,Pd4+/Pd2+,Pd4+,Pd2+,1.26,0.0,298.15,mp-4,mp-4,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Pd4+ + ne- -> Pd2+
+88,Ir4+/Ir3+,Ir4+,Ir3+,0.87,0.0,298.15,mp-101,mp-101,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ir4+ + ne- -> Ir3+
+89,Ru4+/Ru3+,Ru4+,Ru3+,0.86,0.0,298.15,mp-864,mp-864,P4_2/mnm,P63/mmc,Tetragonal,Hexagonal,10.1063/1.555839,Ru4+ + ne- -> Ru3+
+90,Rh4+/Rh3+,Rh4+,Rh3+,1.43,0.0,298.15,mp-33,mp-33,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Rh4+ + ne- -> Rh3+
+91,Os4+/Os3+,Os4+,Os3+,0.85,0.0,298.15,mp-103,mp-103,P4_2/mnm,P63/mmc,Tetragonal,Hexagonal,10.1063/1.555839,Os4+ + ne- -> Os3+
+92,Ag2+/Ag+,Ag2+,Ag+,1.98,0.0,298.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag2+ + ne- -> Ag+
+93,Hg2(2+)/Hg,Hg2(2+),Hg,0.797,0.0,298.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2(2+) + ne- -> Hg
+94,Hg2Cl2/Hg,Hg2Cl2,Hg,0.268,0.0,298.15,mp-22920,mp-1018,I4/mmm,R-3m,Tetragonal,Rhombohedral,10.1063/1.555839,Hg2Cl2 + ne- -> Hg
+95,SO4(2-)/SO2,SO4(2-),SO2,0.17,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,SO4(2-) + ne- -> SO2
+96,AsO4(3-)/AsO2-,AsO4(3-),AsO2-,0.56,0.0,298.15,mp-19359,mp-19359,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,AsO4(3-) + ne- -> AsO2-
+97,SeO4(2-)/SeO3(2-),SeO4(2-),SeO3(2-),1.15,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,SeO4(2-) + ne- -> SeO3(2-)
+98,NO3-/NO,NO3-,NO,0.957,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,NO3- + ne- -> NO
+99,ClO3-/ClO2,ClO3-,ClO2,1.175,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,ClO3- + ne- -> ClO2
+100,S4O6(2-)/S2O3(2-),S4O6(2-),S2O3(2-),0.08,0.0,298.15,mp-6773,mp-6773,Cmcm,Cmcm,Orthorhombic,Orthorhombic,10.1063/1.555839,S4O6(2-) + ne- -> S2O3(2-)
+101,La3+/La,La3+,La,-2.379,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,La3+ + 3e- -> La
+102,Ce3+/Ce,Ce3+,Ce,-2.336,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Ce3+ + 3e- -> Ce
+103,Pr3+/Pr,Pr3+,Pr,-2.353,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Pr3+ + 3e- -> Pr
+104,Nd3+/Nd,Nd3+,Nd,-2.323,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Nd3+ + 3e- -> Nd
+105,Sm3+/Sm,Sm3+,Sm,-2.304,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Sm3+ + 3e- -> Sm
+106,Eu3+/Eu,Eu3+,Eu,-1.991,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Eu3+ + 3e- -> Eu
+107,Gd3+/Gd,Gd3+,Gd,-2.279,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Gd3+ + 3e- -> Gd
+108,Tb3+/Tb,Tb3+,Tb,-2.28,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Tb3+ + 3e- -> Tb
+109,Dy3+/Dy,Dy3+,Dy,-2.295,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Dy3+ + 3e- -> Dy
+110,Ho3+/Ho,Ho3+,Ho,-2.33,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Ho3+ + 3e- -> Ho
+111,Er3+/Er,Er3+,Er,-2.331,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Er3+ + 3e- -> Er
+112,Tm3+/Tm,Tm3+,Tm,-2.319,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Tm3+ + 3e- -> Tm
+113,Yb3+/Yb,Yb3+,Yb,-2.19,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Yb3+ + 3e- -> Yb
+114,Lu3+/Lu,Lu3+,Lu,-2.28,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Lu3+ + 3e- -> Lu
+115,Y3+/Y,Y3+,Y,-2.372,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Y3+ + 3e- -> Y
+116,Sc3+/Sc,Sc3+,Sc,-2.077,0.0,298.15,mp-1018,mp-1018,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Sc3+ + 3e- -> Sc
+117,U4+/U3+,U4+,U3+,0.155,0.0,298.15,mp-796,mp-796,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,U4+ + e- -> U3+
+118,U3+/U,U3+,U,-1.798,0.0,298.15,mp-796,mp-796,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,U3+ + e- -> U
+119,Np4+/Np3+,Np4+,Np3+,0.155,0.0,298.15,mp-796,mp-796,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,Np4+ + e- -> Np3+
+120,Pu4+/Pu3+,Pu4+,Pu3+,1.006,0.0,298.15,mp-796,mp-796,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,Pu4+ + e- -> Pu3+
+121,Am4+/Am3+,Am4+,Am3+,2.6,0.0,298.15,mp-796,mp-796,I4/mmm,I4/mmm,Tetragonal,Tetragonal,10.1063/1.555839,Am4+ + e- -> Am3+
+122,LiFePO4/FePO4,FePO4,LiFePO4,3.45,7.0,298.15,mp-20361,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiFePO4/FePO4 redox reaction
+123,LiCoO2/CoO2,CoO2,LiCoO2,3.9,7.0,298.15,mp-20493,mp-24850,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiCoO2/CoO2 redox reaction
+124,LiMn2O4/Mn2O4,Mn2O4,LiMn2O4,4.1,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acsami.4c15742,LiMn2O4/Mn2O4 redox reaction
+125,LiNiO2/NiO2,NiO2,LiNiO2,3.8,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiNiO2/NiO2 redox reaction
+126,LiV2O5/V2O5,V2O5,LiV2O5,3.2,7.0,298.15,mp-25279,mp-25280,Pmmn,Pmmn,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiV2O5/V2O5 redox reaction
+127,LiTiS2/TiS2,TiS2,LiTiS2,2.15,7.0,298.15,mp-2267,mp-2268,P-3m1,P-3m1,Trigonal,Trigonal,10.1021/acsami.4c15742,LiTiS2/TiS2 redox reaction
+128,LiCrO2/CrO2,CrO2,LiCrO2,3.5,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiCrO2/CrO2 redox reaction
+129,Li2MnO3/MnO2,MnO2,Li2MnO3,4.1,7.0,298.15,mp-22526,mp-18713,P42/mnm,C2/m,Tetragonal,Monoclinic,10.1021/acsami.4c15742,Li2MnO3/MnO2 redox reaction
+130,Li2FeSiO4/FeSiO4,FeSiO4,Li2FeSiO4,2.8,7.0,298.15,mp-676141,mp-676140,Pmn2_1,Pmn2_1,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li2FeSiO4/FeSiO4 redox reaction
+131,Li2MnSiO4/MnSiO4,MnSiO4,Li2MnSiO4,4.1,7.0,298.15,mp-676141,mp-676140,Pmn2_1,Pmn2_1,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li2MnSiO4/MnSiO4 redox reaction
+132,Li2CoSiO4/CoSiO4,CoSiO4,Li2CoSiO4,4.1,7.0,298.15,mp-676141,mp-676140,Pmn2_1,Pmn2_1,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li2CoSiO4/CoSiO4 redox reaction
+133,LiFeSO4F/FeSO4F,FeSO4F,LiFeSO4F,3.6,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiFeSO4F/FeSO4F redox reaction
+134,LiCoSO4F/CoSO4F,CoSO4F,LiCoSO4F,4.4,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiCoSO4F/CoSO4F redox reaction
+135,LiMnSO4F/MnSO4F,MnSO4F,LiMnSO4F,3.9,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiMnSO4F/MnSO4F redox reaction
+136,LiNiSO4F/NiSO4F,NiSO4F,LiNiSO4F,4.2,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiNiSO4F/NiSO4F redox reaction
+137,LiVPO4F/VPO4F,VPO4F,LiVPO4F,4.2,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiVPO4F/VPO4F redox reaction
+138,Li2CuSiO4/CuSiO4,CuSiO4,Li2CuSiO4,3.0,7.0,298.15,mp-676141,mp-676140,Pmn2_1,Pmn2_1,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li2CuSiO4/CuSiO4 redox reaction
+139,Li2NiSiO4/NiSiO4,NiSiO4,Li2NiSiO4,4.7,7.0,298.15,mp-676141,mp-676140,Pmn2_1,Pmn2_1,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li2NiSiO4/NiSiO4 redox reaction
+140,Li3V2(PO4)3/V2(PO4)3,V2(PO4)3,Li3V2(PO4)3,3.8,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,Li3V2(PO4)3/V2(PO4)3 redox reaction
+141,LiVOPO4/VOPO4,VOPO4,LiVOPO4,3.9,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiVOPO4/VOPO4 redox reaction
+142,LiMnPO4/MnPO4,MnPO4,LiMnPO4,4.1,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiMnPO4/MnPO4 redox reaction
+143,LiCoPO4/CoPO4,CoPO4,LiCoPO4,4.8,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiCoPO4/CoPO4 redox reaction
+144,LiNiPO4/NiPO4,NiPO4,LiNiPO4,5.1,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiNiPO4/NiPO4 redox reaction
+145,LiCuPO4/CuPO4,CuPO4,LiCuPO4,3.5,7.0,298.15,mp-5560,mp-5561,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1021/acsami.4c15742,LiCuPO4/CuPO4 redox reaction
+146,Li4Ti5O12/Ti5O12,Li4Ti5O12,Ti5O12,1.55,7.0,298.15,mp-5560,mp-5561,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acsami.4c15742,Li4Ti5O12/Ti5O12 redox reaction
+147,Li2RuO3/RuO2,RuO2,Li2RuO3,3.6,7.0,298.15,mp-864,mp-864,C2/m,P4_2/mnm,Monoclinic,Tetragonal,10.1021/acsami.4c15742,Li2RuO3/RuO2 redox reaction
+148,Li2IrO3/IrO2,IrO2,Li2IrO3,3.8,7.0,298.15,mp-101,mp-101,C2/m,P4_2/mnm,Monoclinic,Tetragonal,10.1021/acsami.4c15742,Li2IrO3/IrO2 redox reaction
+149,Li2SnO3/SnO2,SnO2,Li2SnO3,2.5,7.0,298.15,mp-1179,mp-1179,C2/c,P4_2/mnm,Monoclinic,Tetragonal,10.1021/acsami.4c15742,Li2SnO3/SnO2 redox reaction
+150,Li2TiO3/TiO2,TiO2,Li2TiO3,1.5,7.0,298.15,mp-2664,mp-2664,C2/c,I4_1/amd,Monoclinic,Tetragonal,10.1021/acsami.4c15742,Li2TiO3/TiO2 redox reaction
+151,Li2ZrO3/ZrO2,ZrO2,Li2ZrO3,2.0,7.0,298.15,mp-63,mp-63,C2/c,P2_1/c,Monoclinic,Monoclinic,10.1021/acsami.4c15742,Li2ZrO3/ZrO2 redox reaction
+152,LiNbO3/Nb2O5,Nb2O5,LiNbO3,2.0,7.0,298.15,mp-15,mp-15,R3c,Pmmn,Rhombohedral,Orthorhombic,10.1021/acsami.4c15742,LiNbO3/Nb2O5 redox reaction
+153,Li2WO4/WO3,WO3,Li2WO4,2.7,7.0,298.15,mp-19,mp-19,P2_1/c,Pm-3m,Monoclinic,Cubic,10.1021/acsami.4c15742,Li2WO4/WO3 redox reaction
+154,Li2MoO3/MoO3,MoO3,Li2MoO3,2.5,7.0,298.15,mp-6773,mp-6773,R-3,R-3,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,Li2MoO3/MoO3 redox reaction
+155,Li2MoO4/MoO3,MoO3,Li2MoO4,2.5,7.0,298.15,mp-6773,mp-6773,P2_1/c,Pm-3m,Monoclinic,Cubic,10.1021/acsami.4c15742,Li2MoO4/MoO3 redox reaction
+156,LiTaO3/Ta2O5,Ta2O5,LiTaO3,2.3,7.0,298.15,mp-17,mp-17,R3c,Pmmn,Rhombohedral,Orthorhombic,10.1021/acsami.4c15742,LiTaO3/Ta2O5 redox reaction
+157,LiFeO2/FeO2,FeO2,LiFeO2,3.6,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiFeO2/FeO2 redox reaction
+158,LiNi0.5Mn0.5O2/NMC,Ni0.5Mn0.5O2,LiNi0.5Mn0.5O2,4.0,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiNi0.5Mn0.5O2/NMC redox reaction
+159,LiNi0.8Co0.15Al0.05O2/NCA,Ni0.8Co0.15Al0.05O2,LiNi0.8Co0.15Al0.05O2,3.75,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiNi0.8Co0.15Al0.05O2/NCA redox reaction
+160,LiNi0.33Mn0.33Co0.33O2/NMC111,Ni0.33Mn0.33Co0.33O2,LiNi0.33Mn0.33Co0.33O2,3.85,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1021/acsami.4c15742,LiNi0.33Mn0.33Co0.33O2/NMC111 redox reaction
+161,NaFePO4/FePO4,FePO4,NaFePO4,2.7,7.0,298.15,mp-20361,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,NaFePO4/FePO4 redox reaction
+162,NaMnO2/MnO2,MnO2,NaMnO2,3.2,7.0,298.15,mp-22526,mp-18713,P42/mnm,C2/m,Tetragonal,Monoclinic,10.1016/j.jpowsour.2024.236035,NaMnO2/MnO2 redox reaction
+163,NaCoO2/CoO2,CoO2,NaCoO2,3.3,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1016/j.jpowsour.2024.236035,NaCoO2/CoO2 redox reaction
+164,NaNiO2/NiO2,NiO2,NaNiO2,3.4,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1016/j.jpowsour.2024.236035,NaNiO2/NiO2 redox reaction
+165,Na3V2(PO4)3/V2(PO4)3,V2(PO4)3,Na3V2(PO4)3,3.4,7.0,298.15,mp-5560,mp-5561,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1016/j.jpowsour.2024.236035,Na3V2(PO4)3/V2(PO4)3 redox reaction
+166,NaCrO2/CrO2,CrO2,NaCrO2,3.0,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1016/j.jpowsour.2024.236035,NaCrO2/CrO2 redox reaction
+167,Na2FePO4F/FePO4F,FePO4F,Na2FePO4F,3.0,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,Na2FePO4F/FePO4F redox reaction
+168,Na2MnPO4F/MnPO4F,MnPO4F,Na2MnPO4F,3.5,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,Na2MnPO4F/MnPO4F redox reaction
+169,Na2CoPO4F/CoPO4F,CoPO4F,Na2CoPO4F,4.3,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,Na2CoPO4F/CoPO4F redox reaction
+170,NaVPO4F/VPO4F,VPO4F,NaVPO4F,3.9,7.0,298.15,mp-6773,mp-6773,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,NaVPO4F/VPO4F redox reaction
+171,KFePO4/FePO4,FePO4,KFePO4,2.8,7.0,298.15,mp-20361,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1016/j.jpowsour.2024.236035,KFePO4/FePO4 redox reaction
+172,KMnO2/MnO2,MnO2,KMnO2,2.9,7.0,298.15,mp-22526,mp-18713,P42/mnm,C2/m,Tetragonal,Monoclinic,10.1016/j.jpowsour.2024.236035,KMnO2/MnO2 redox reaction
+173,KCoO2/CoO2,CoO2,KCoO2,3.1,7.0,298.15,mp-20493,mp-20493,R-3m,R-3m,Rhombohedral,Rhombohedral,10.1016/j.jpowsour.2024.236035,KCoO2/CoO2 redox reaction
+174,Fe2O3/Fe3O4,Fe2O3,Fe3O4,0.221,7.0,298.15,mp-19770,mp-19306,R-3c,Fd-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Fe2O3/Fe3O4 oxide redox
+175,Fe3O4/FeO,Fe3O4,FeO,0.43,7.0,298.15,mp-19306,mp-19006,Fd-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,Fe3O4/FeO oxide redox
+176,MnO2/Mn2O3,MnO2,Mn2O3,0.59,7.0,298.15,mp-22526,mp-19017,P42/mnm,R-3c,Tetragonal,Rhombohedral,10.1073/pnas.2320134121,MnO2/Mn2O3 oxide redox
+177,Mn2O3/Mn3O4,Mn2O3,Mn3O4,0.45,7.0,298.15,mp-19017,mp-18712,R-3c,I41/amd,Rhombohedral,Tetragonal,10.1073/pnas.2320134121,Mn2O3/Mn3O4 oxide redox
+178,Mn3O4/MnO,Mn3O4,MnO,0.3,7.0,298.15,mp-18712,mp-19006,I41/amd,Fm-3m,Tetragonal,Cubic,10.1073/pnas.2320134121,Mn3O4/MnO oxide redox
+179,Co3O4/CoO,Co3O4,CoO,0.53,7.0,298.15,mp-18712,mp-19006,Fd-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,Co3O4/CoO oxide redox
+180,NiO/Ni,NiO,Ni,0.257,7.0,298.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,NiO/Ni oxide redox
+181,CuO/Cu2O,CuO,Cu2O,0.43,7.0,298.15,mp-19009,mp-554,C2/c,Pn-3m,Monoclinic,Cubic,10.1073/pnas.2320134121,CuO/Cu2O oxide redox
+182,Cu2O/Cu,Cu2O,Cu,0.36,7.0,298.15,mp-554,mp-30,Pn-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,Cu2O/Cu oxide redox
+183,CuO/Cu,CuO,Cu,0.57,7.0,298.15,mp-19009,mp-30,C2/c,Fm-3m,Monoclinic,Cubic,10.1073/pnas.2320134121,CuO/Cu oxide redox
+184,Fe2O3/FeO,Fe2O3,FeO,0.28,7.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Fe2O3/FeO oxide redox
+185,FeO/Fe,FeO,Fe,-0.447,7.0,298.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1073/pnas.2320134121,FeO/Fe oxide redox
+186,CoO/Co,CoO,Co,-0.28,7.0,298.15,mp-19006,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,CoO/Co oxide redox
+187,ZnO/Zn,ZnO,Zn,-0.762,7.0,298.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1073/pnas.2320134121,ZnO/Zn oxide redox
+188,CdO/Cd,CdO,Cd,-0.403,7.0,298.15,mp-1519,mp-1519,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,CdO/Cd oxide redox
+189,PbO/Pb,PbO,Pb,-0.126,7.0,298.15,mp-20529,mp-1518,P4_2/mnm,Fm-3m,Tetragonal,Cubic,10.1073/pnas.2320134121,PbO/Pb oxide redox
+190,SnO2/Sn,SnO2,Sn,-0.14,7.0,298.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1073/pnas.2320134121,SnO2/Sn oxide redox
+191,SnO/Sn,SnO,Sn,-0.1,7.0,298.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1073/pnas.2320134121,SnO/Sn oxide redox
+192,TiO2/Ti2O3,TiO2,Ti2O3,0.1,7.0,298.15,mp-2664,mp-19365,I4_1/amd,R-3c,Tetragonal,Rhombohedral,10.1073/pnas.2320134121,TiO2/Ti2O3 oxide redox
+193,Ti2O3/TiO,Ti2O3,TiO,-0.2,7.0,298.15,mp-19365,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Ti2O3/TiO oxide redox
+194,V2O5/V2O3,V2O5,V2O3,0.337,7.0,298.15,mp-25279,mp-19365,Pmmn,R-3c,Orthorhombic,Rhombohedral,10.1073/pnas.2320134121,V2O5/V2O3 oxide redox
+195,V2O5/VO2,V2O5,VO2,0.34,7.0,298.15,mp-25279,mp-19094,Pmmn,I4_1/a,Orthorhombic,Tetragonal,10.1073/pnas.2320134121,V2O5/VO2 oxide redox
+196,VO2/V2O3,VO2,V2O3,0.33,7.0,298.15,mp-19094,mp-19365,I4_1/a,R-3c,Tetragonal,Rhombohedral,10.1073/pnas.2320134121,VO2/V2O3 oxide redox
+197,Cr2O3/Cr,Cr2O3,Cr,-0.744,7.0,298.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Cr2O3/Cr oxide redox
+198,MoO3/MoO2,MoO3,MoO2,0.4,7.0,298.15,mp-6773,mp-19006,Pbnm,P2_1/c,Orthorhombic,Monoclinic,10.1073/pnas.2320134121,MoO3/MoO2 oxide redox
+199,MoO2/Mo,MoO2,Mo,-0.2,7.0,298.15,mp-19006,mp-29,P2_1/c,Im-3m,Monoclinic,Cubic,10.1073/pnas.2320134121,MoO2/Mo oxide redox
+200,WO3/WO2,WO3,WO2,0.35,7.0,298.15,mp-19,mp-19006,Pm-3m,P2_1/c,Cubic,Monoclinic,10.1073/pnas.2320134121,WO3/WO2 oxide redox
+201,WO2/W,WO2,W,0.1,7.0,298.15,mp-19006,mp-19,P2_1/c,Im-3m,Monoclinic,Cubic,10.1073/pnas.2320134121,WO2/W oxide redox
+202,RuO2/Ru,RuO2,Ru,0.45,7.0,298.15,mp-864,mp-864,P4_2/mnm,P63/mmc,Tetragonal,Hexagonal,10.1073/pnas.2320134121,RuO2/Ru oxide redox
+203,IrO2/Ir,IrO2,Ir,0.97,7.0,298.15,mp-101,mp-101,P4_2/mnm,Fm-3m,Tetragonal,Cubic,10.1073/pnas.2320134121,IrO2/Ir oxide redox
+204,PdO/Pd,PdO,Pd,0.951,7.0,298.15,mp-4,mp-2,P4_2/mmc,Fm-3m,Tetragonal,Cubic,10.1073/pnas.2320134121,PdO/Pd oxide redox
+205,PtO2/Pt,PtO2,Pt,1.18,7.0,298.15,mp-126,mp-126,Pnnm,Fm-3m,Orthorhombic,Cubic,10.1073/pnas.2320134121,PtO2/Pt oxide redox
+206,Ag2O/Ag,Ag2O,Ag,0.342,7.0,298.15,mp-124,mp-124,Pn-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,Ag2O/Ag oxide redox
+207,Au2O3/Au,Au2O3,Au,1.498,7.0,298.15,mp-12681,mp-81,Fd-3m,Fm-3m,Cubic,Cubic,10.1073/pnas.2320134121,Au2O3/Au oxide redox
+208,Al2O3/Al,Al2O3,Al,-1.662,7.0,298.15,mp-2664,mp-134,R-3c,Fm-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Al2O3/Al oxide redox
+209,MgO/Mg,MgO,Mg,-2.372,7.0,298.15,mp-1265,mp-1104,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,MgO/Mg oxide redox
+210,CaO/Ca,CaO,Ca,-2.868,7.0,298.15,mp-2605,mp-1018,Fm-3m,Im-3m,Cubic,Cubic,10.1073/pnas.2320134121,CaO/Ca oxide redox
+211,SiO2/Si,SiO2,Si,-0.909,7.0,298.15,mp-6930,mp-149,P3_121,Fd-3m,Trigonal,Cubic,10.1073/pnas.2320134121,SiO2/Si oxide redox
+212,GeO2/Ge,GeO2,Ge,-0.12,7.0,298.15,mp-31,mp-31,P3_121,Fd-3m,Trigonal,Cubic,10.1073/pnas.2320134121,GeO2/Ge oxide redox
+213,Sb2O3/Sb,Sb2O3,Sb,0.152,7.0,298.15,mp-104,mp-104,Pccn,R-3m,Orthorhombic,Rhombohedral,10.1073/pnas.2320134121,Sb2O3/Sb oxide redox
+214,Bi2O3/Bi,Bi2O3,Bi,0.308,7.0,298.15,mp-1018,mp-1018,P2_1/c,R-3m,Monoclinic,Rhombohedral,10.1073/pnas.2320134121,Bi2O3/Bi oxide redox
+215,Nb2O5/Nb2O3,Nb2O5,Nb2O3,0.1,7.0,298.15,mp-15,mp-15,Pmmn,R-3c,Orthorhombic,Rhombohedral,10.1073/pnas.2320134121,Nb2O5/Nb2O3 oxide redox
+216,Ta2O5/Ta2O3,Ta2O5,Ta2O3,0.15,7.0,298.15,mp-17,mp-17,Pmmn,R-3c,Orthorhombic,Rhombohedral,10.1073/pnas.2320134121,Ta2O5/Ta2O3 oxide redox
+217,ZrO2/Zr,ZrO2,Zr,-1.453,7.0,298.15,mp-63,mp-63,P2_1/c,P63/mmc,Monoclinic,Hexagonal,10.1073/pnas.2320134121,ZrO2/Zr oxide redox
+218,HfO2/Hf,HfO2,Hf,-1.505,7.0,298.15,mp-63,mp-63,P2_1/c,P63/mmc,Monoclinic,Hexagonal,10.1073/pnas.2320134121,HfO2/Hf oxide redox
+219,CeO2/Ce2O3,CeO2,Ce2O3,0.4,7.0,298.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,CeO2/Ce2O3 oxide redox
+220,PrO2/Pr2O3,PrO2,Pr2O3,0.5,7.0,298.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,PrO2/Pr2O3 oxide redox
+221,TbO2/Tb2O3,TbO2,Tb2O3,0.6,7.0,298.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,TbO2/Tb2O3 oxide redox
+222,UO2/UO2+,UO2,UO2+,0.33,7.0,298.15,mp-796,mp-796,Fm-3m,I4/mmm,Cubic,Tetragonal,10.1073/pnas.2320134121,UO2/UO2+ oxide redox
+223,Co2O3/Co3O4,Co2O3,Co3O4,0.53,7.0,298.15,mp-19009,mp-18712,R-3c,Fd-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Co2O3/Co3O4 oxide redox
+224,Pb3O4/PbO,Pb3O4,PbO,0.25,7.0,298.15,mp-20529,mp-20529,P4_2/mnm,P4_2/mnm,Tetragonal,Tetragonal,10.1073/pnas.2320134121,Pb3O4/PbO oxide redox
+225,MnO2/MnO,MnO2,MnO,0.3,7.0,298.15,mp-22526,mp-19006,P42/mnm,Fm-3m,Tetragonal,Cubic,10.1073/pnas.2320134121,MnO2/MnO oxide redox
+226,Fe3O4/Fe2O3,Fe3O4,Fe2O3,-0.221,7.0,298.15,mp-19306,mp-19770,Fd-3m,R-3c,Cubic,Rhombohedral,10.1073/pnas.2320134121,Fe3O4/Fe2O3 oxide redox
+227,Cu2O/CuO,Cu2O,CuO,-0.43,7.0,298.15,mp-554,mp-19009,Pn-3m,C2/c,Cubic,Monoclinic,10.1073/pnas.2320134121,Cu2O/CuO oxide redox
+228,TiO/Ti,TiO,Ti,-1.63,7.0,298.15,mp-19006,mp-72,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1073/pnas.2320134121,TiO/Ti oxide redox
+229,VO2/V2O5,VO2,V2O5,-0.34,7.0,298.15,mp-19094,mp-25279,I4_1/a,Pmmn,Tetragonal,Orthorhombic,10.1073/pnas.2320134121,VO2/V2O5 oxide redox
+230,V2O3/VO2,V2O3,VO2,-0.33,7.0,298.15,mp-19365,mp-19094,R-3c,I4_1/a,Rhombohedral,Tetragonal,10.1073/pnas.2320134121,V2O3/VO2 oxide redox
+231,ReO3/ReO2,ReO3,ReO2,0.4,7.0,298.15,mp-11,mp-11,Pm-3m,P2_1/c,Cubic,Monoclinic,10.1073/pnas.2320134121,ReO3/ReO2 oxide redox
+232,ReO2/Re,ReO2,Re,0.3,7.0,298.15,mp-11,mp-11,P2_1/c,P63/mmc,Monoclinic,Hexagonal,10.1073/pnas.2320134121,ReO2/Re oxide redox
+233,OsO4/OsO2,OsO4,OsO2,0.85,7.0,298.15,mp-103,mp-103,P4_2/mnm,P2_1/c,Tetragonal,Monoclinic,10.1073/pnas.2320134121,OsO4/OsO2 oxide redox
+234,RuO4/RuO2,RuO4,RuO2,1.4,7.0,298.15,mp-864,mp-864,P4_2/mnm,P4_2/mnm,Tetragonal,Tetragonal,10.1073/pnas.2320134121,RuO4/RuO2 oxide redox
+235,PbO2/PbO,PbO2,PbO,0.248,7.0,298.15,mp-20529,mp-20529,P4_2/mnm,P4_2/mnm,Tetragonal,Tetragonal,10.1073/pnas.2320134121,PbO2/PbO oxide redox
+236,Mn2O3/MnO,Mn2O3,MnO,0.45,7.0,298.15,mp-19017,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1073/pnas.2320134121,Mn2O3/MnO oxide redox
+237,CoO/Co3O4,CoO,Co3O4,-0.53,7.0,298.15,mp-19006,mp-18712,Fm-3m,Fd-3m,Cubic,Cubic,10.1073/pnas.2320134121,CoO/Co3O4 oxide redox
+238,FeO/Fe3O4,FeO,Fe3O4,-0.43,7.0,298.15,mp-19006,mp-19306,Fm-3m,Fd-3m,Cubic,Cubic,10.1073/pnas.2320134121,FeO/Fe3O4 oxide redox
+239,FeO/Fe2O3,FeO,Fe2O3,-0.28,7.0,298.15,mp-19006,mp-19770,Fm-3m,R-3c,Cubic,Rhombohedral,10.1073/pnas.2320134121,FeO/Fe2O3 oxide redox
+240,Benzoquinone/Hydroquinone,C6H4O2,C6H4(OH)2,0.699,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Benzoquinone/Hydroquinone + 2H+ + 2e- -> reduced form
+241,"1,2-Benzoquinone/1,2-Dihydroxybenzene",C6H4O2,C6H4(OH)2,0.79,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,2-Benzoquinone/1,2-Dihydroxybenzene + 2H+ + 2e- -> reduced form"
+242,Naphthoquinone/Naphthohydroquinone,C10H6O2,C10H6(OH)2,0.48,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Naphthoquinone/Naphthohydroquinone + 2H+ + 2e- -> reduced form
+243,Anthraquinone/Anthrahydroquinone,C14H8O2,C14H8(OH)2,0.15,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Anthraquinone/Anthrahydroquinone + 2H+ + 2e- -> reduced form
+244,"9,10-Phenanthrenequinone/Phenanthrenehydroquinone",C14H8O2,C14H8(OH)2,0.44,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"9,10-Phenanthrenequinone/Phenanthrenehydroquinone + 2H+ + 2e- -> reduced form"
+245,2-Methylbenzoquinone/2-Methylhydroquinone,C6H3(CH3)O2,C6H3(CH3)(OH)2,0.64,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Methylbenzoquinone/2-Methylhydroquinone + 2H+ + 2e- -> reduced form
+246,"2,5-Dimethylbenzoquinone/2,5-Dimethylhydroquinone",C6H2(CH3)2O2,C6H2(CH3)2(OH)2,0.58,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,5-Dimethylbenzoquinone/2,5-Dimethylhydroquinone + 2H+ + 2e- -> reduced form"
+247,"2,3-Dimethylbenzoquinone/2,3-Dimethylhydroquinone",C6H2(CH3)2O2,C6H2(CH3)2(OH)2,0.56,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,3-Dimethylbenzoquinone/2,3-Dimethylhydroquinone + 2H+ + 2e- -> reduced form"
+248,"2,6-Dimethylbenzoquinone/2,6-Dimethylhydroquinone",C6H2(CH3)2O2,C6H2(CH3)2(OH)2,0.59,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,6-Dimethylbenzoquinone/2,6-Dimethylhydroquinone + 2H+ + 2e- -> reduced form"
+249,Trimethylbenzoquinone/Trimethylhydroquinone,C6H(CH3)3O2,C6H(CH3)3(OH)2,0.53,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Trimethylbenzoquinone/Trimethylhydroquinone + 2H+ + 2e- -> reduced form
+250,Duroquinone/Durohydroquinone,C6(CH3)4O2,C6(CH3)4(OH)2,0.51,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Duroquinone/Durohydroquinone + 2H+ + 2e- -> reduced form
+251,2-Chlorobenzoquinone/2-Chlorohydroquinone,C6H3ClO2,C6H3Cl(OH)2,0.66,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Chlorobenzoquinone/2-Chlorohydroquinone + 2H+ + 2e- -> reduced form
+252,2-Bromobenzoquinone/2-Bromohydroquinone,C6H3BrO2,C6H3Br(OH)2,0.67,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Bromobenzoquinone/2-Bromohydroquinone + 2H+ + 2e- -> reduced form
+253,"2,5-Dichlorobenzoquinone/2,5-Dichlorohydroquinone",C6H2Cl2O2,C6H2Cl2(OH)2,0.71,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,5-Dichlorobenzoquinone/2,5-Dichlorohydroquinone + 2H+ + 2e- -> reduced form"
+254,"2,3-Dichlorobenzoquinone/2,3-Dichlorohydroquinone",C6H2Cl2O2,C6H2Cl2(OH)2,0.69,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,3-Dichlorobenzoquinone/2,3-Dichlorohydroquinone + 2H+ + 2e- -> reduced form"
+255,"2,6-Dichlorobenzoquinone/2,6-Dichlorohydroquinone",C6H2Cl2O2,C6H2Cl2(OH)2,0.71,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,6-Dichlorobenzoquinone/2,6-Dichlorohydroquinone + 2H+ + 2e- -> reduced form"
+256,"2,3,5-Trichlorobenzoquinone/2,3,5-Trichlorohydroquinone",C6HCl3O2,C6HCl3(OH)2,0.8,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,3,5-Trichlorobenzoquinone/2,3,5-Trichlorohydroquinone + 2H+ + 2e- -> reduced form"
+257,Tetrachlorobenzoquinone/Chloranil,C6Cl4O2,C6Cl4(OH)2,0.99,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Tetrachlorobenzoquinone/Chloranil + 2H+ + 2e- -> reduced form
+258,Tetrabromobenzoquinone/Bromanil,C6Br4O2,C6Br4(OH)2,0.91,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Tetrabromobenzoquinone/Bromanil + 2H+ + 2e- -> reduced form
+259,"Tetrafluoro-1,4-benzoquinone/Tetrafluoro-1,4-hydroquinone",C6F4O2,C6F4(OH)2,0.95,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"Tetrafluoro-1,4-benzoquinone/Tetrafluoro-1,4-hydroquinone + 2H+ + 2e- -> reduced form"
+260,2-Methoxybenzoquinone/2-Methoxyhydroquinone,C6H3(OCH3)O2,C6H3(OCH3)(OH)2,0.62,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Methoxybenzoquinone/2-Methoxyhydroquinone + 2H+ + 2e- -> reduced form
+261,"2,5-Dimethoxybenzoquinone/2,5-Dimethoxyhydroquinone",C6H2(OCH3)2O2,C6H2(OCH3)2(OH)2,0.54,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,5-Dimethoxybenzoquinone/2,5-Dimethoxyhydroquinone + 2H+ + 2e- -> reduced form"
+262,"2-Nitro-1,4-benzoquinone/2-Nitro-1,4-hydroquinone",C6H3(NO2)O2,C6H3(NO2)(OH)2,0.71,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Nitro-1,4-benzoquinone/2-Nitro-1,4-hydroquinone + 2H+ + 2e- -> reduced form"
+263,"2-Cyano-1,4-benzoquinone/2-Cyano-1,4-hydroquinone",C6H3(CN)O2,C6H3(CN)(OH)2,0.68,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Cyano-1,4-benzoquinone/2-Cyano-1,4-hydroquinone + 2H+ + 2e- -> reduced form"
+264,"2-Acetyl-1,4-benzoquinone/2-Acetyl-1,4-hydroquinone",C6H3(COCH3)O2,C6H3(COCH3)(OH)2,0.65,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Acetyl-1,4-benzoquinone/2-Acetyl-1,4-hydroquinone + 2H+ + 2e- -> reduced form"
+265,2-Methylanthraquinone/2-Methylanthrahydroquinone,C14H7(CH3)O2,C14H7(CH3)(OH)2,-0.13,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Methylanthraquinone/2-Methylanthrahydroquinone + 2H+ + 2e- -> reduced form
+266,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone,C14H7(OH)O2,C14H7(OH)(OH)2,-0.05,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone + 2H+ + 2e- -> reduced form
+267,1-Aminoanthraquinone/1-Aminoanthrahydroquinone,C14H7(NH2)O2,C14H7(NH2)(OH)2,-0.1,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,1-Aminoanthraquinone/1-Aminoanthrahydroquinone + 2H+ + 2e- -> reduced form
+268,2-Aminoanthraquinone/2-Aminoanthrahydroquinone,C14H7(NH2)O2,C14H7(NH2)(OH)2,-0.12,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Aminoanthraquinone/2-Aminoanthrahydroquinone + 2H+ + 2e- -> reduced form
+269,"1,4-Diaminoanthraquinone/1,4-Diaminoanthrahydroquinone",C14H6(NH2)2O2,C14H6(NH2)2(OH)2,-0.2,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,4-Diaminoanthraquinone/1,4-Diaminoanthrahydroquinone + 2H+ + 2e- -> reduced form"
+270,Alizarin/Alizarin-reduced,C14H6(OH)2O2,C14H6(OH)2(OH)2,-0.04,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Alizarin/Alizarin-reduced + 2H+ + 2e- -> reduced form
+271,Quinizarin/Quinizarin-reduced,C14H6(OH)2O2,C14H6(OH)2(OH)2,-0.06,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Quinizarin/Quinizarin-reduced + 2H+ + 2e- -> reduced form
+272,"1,5-Dichloroanthraquinone/1,5-Dichloroanthrahydroquinone",C14H6Cl2O2,C14H6Cl2(OH)2,0.1,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,5-Dichloroanthraquinone/1,5-Dichloroanthrahydroquinone + 2H+ + 2e- -> reduced form"
+273,"2,6-Dihydroxyanthraquinone/2,6-Dihydroxyanthrahydroquinone",C14H6(OH)2O2,C14H6(OH)2(OH)2,-0.08,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,6-Dihydroxyanthraquinone/2,6-Dihydroxyanthrahydroquinone + 2H+ + 2e- -> reduced form"
+274,"5-Hydroxy-1,4-naphthoquinone/5-Hydroxy-1,4-naphthohydroquinone",C10H5(OH)O2,C10H5(OH)(OH)2,0.42,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"5-Hydroxy-1,4-naphthoquinone/5-Hydroxy-1,4-naphthohydroquinone + 2H+ + 2e- -> reduced form"
+275,"5,8-Dihydroxy-1,4-naphthoquinone/5,8-Dihydroxy-1,4-naphthohydroquinone",C10H4(OH)2O2,C10H4(OH)2(OH)2,0.35,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"5,8-Dihydroxy-1,4-naphthoquinone/5,8-Dihydroxy-1,4-naphthohydroquinone + 2H+ + 2e- -> reduced form"
+276,"2-Hydroxy-1,4-naphthoquinone(Lawsone)/Lawsone-reduced",C10H5(OH)O2,C10H5(OH)(OH)2,0.39,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Hydroxy-1,4-naphthoquinone(Lawsone)/Lawsone-reduced + 2H+ + 2e- -> reduced form"
+277,"2-Amino-1,4-naphthoquinone/2-Amino-1,4-naphthohydroquinone",C10H5(NH2)O2,C10H5(NH2)(OH)2,0.35,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Amino-1,4-naphthoquinone/2-Amino-1,4-naphthohydroquinone + 2H+ + 2e- -> reduced form"
+278,"2-Methyl-1,4-naphthoquinone(VitaminK3)/2-Methyl-1,4-naphthohydroquinone",C10H5(CH3)O2,C10H5(CH3)(OH)2,0.46,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Methyl-1,4-naphthoquinone(VitaminK3)/2-Methyl-1,4-naphthohydroquinone + 2H+ + 2e- -> reduced form"
+279,"2,3-Dichloro-1,4-naphthoquinone/2,3-Dichloro-1,4-naphthohydroquinone",C10H4Cl2O2,C10H4Cl2(OH)2,0.55,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,3-Dichloro-1,4-naphthoquinone/2,3-Dichloro-1,4-naphthohydroquinone + 2H+ + 2e- -> reduced form"
+280,"1,4-Benzoquinone-2-sulfonate/1,4-Hydroquinone-2-sulfonate",C6H3(SO3)O2,C6H3(SO3)(OH)2,0.63,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,4-Benzoquinone-2-sulfonate/1,4-Hydroquinone-2-sulfonate + 2H+ + 2e- -> reduced form"
+281,"1,4-Naphthoquinone-2-sulfonate/1,4-Naphthohydroquinone-2-sulfonate",C10H5(SO3)O2,C10H5(SO3)(OH)2,0.46,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,4-Naphthoquinone-2-sulfonate/1,4-Naphthohydroquinone-2-sulfonate + 2H+ + 2e- -> reduced form"
+282,Anthraquinone-2-sulfonate/Anthrahydroquinone-2-sulfonate,C14H7(SO3-)O2,C14H7(SO3-)(OH)2,-0.05,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Anthraquinone-2-sulfonate/Anthrahydroquinone-2-sulfonate + 2H+ + 2e- -> reduced form
+283,"Anthraquinone-2,6-disulfonate/Anthrahydroquinone-2,6-disulfonate",C14H6(SO3-)2O2,C14H6(SO3-)2(OH)2,-0.07,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"Anthraquinone-2,6-disulfonate/Anthrahydroquinone-2,6-disulfonate + 2H+ + 2e- -> reduced form"
+284,Pyrroloquinolinequinone/Pyrroloquinolinehydroquinone,C14H6N2O8,C14H6N2O6H2,0.09,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Pyrroloquinolinequinone/Pyrroloquinolinehydroquinone + 2H+ + 2e- -> reduced form
+285,Riboflavin/Dihydroriboflavin,C17H20N4O6,C17H20N4O6H2,-0.21,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Riboflavin/Dihydroriboflavin + 2H+ + 2e- -> reduced form
+286,FAD/FADH2,C27H33N9O15P2,C27H33N9O15P2H2,-0.22,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,FAD/FADH2 + 2H+ + 2e- -> reduced form
+287,NAD+/NADH,C21H27N7O14P2,C21H29N7O14P2,-0.32,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,NAD+/NADH + 2H+ + 2e- -> reduced form
+288,NADP+/NADPH,C21H26N7O17P3,C21H28N7O17P3,-0.32,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,NADP+/NADPH + 2H+ + 2e- -> reduced form
+289,Phylloquinone(VitaminK1)/Phylloquinol,C31H46O2,C31H46(OH)2,0.36,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Phylloquinone(VitaminK1)/Phylloquinol + 2H+ + 2e- -> reduced form
+290,Ubiquinone/Ubiquinol,C59H90O4,C59H90(OH)4,0.1,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Ubiquinone/Ubiquinol + 2H+ + 2e- -> reduced form
+291,Menaquinone/Menaquinol,C41H56O2,C41H56(OH)2,-0.07,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Menaquinone/Menaquinol + 2H+ + 2e- -> reduced form
+292,2-Hydroxy-3-methylbenzoquinone/2-Hydroxy-3-methylhydroquinone,C6H2(OH)(CH3)O2,C6H2(OH)(CH3)(OH)2,0.61,0.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Hydroxy-3-methylbenzoquinone/2-Hydroxy-3-methylhydroquinone + 2H+ + 2e- -> reduced form
+293,MnO4-/MnO2(pH7),MnO4-,MnO2,0.588,7.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH7) pH-dependent redox
+294,MnO4-/MnO2(pH14),MnO4-,MnO2,0.588,14.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH14) pH-dependent redox
+295,Cr2O7(2-)/Cr(OH)3(pH7),Cr2O7(2-),Cr(OH)3,0.51,7.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr(OH)3(pH7) pH-dependent redox
+296,Cr2O7(2-)/Cr(OH)3(pH14),Cr2O7(2-),Cr(OH)3,-0.13,14.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr(OH)3(pH14) pH-dependent redox
+297,Fe3+/Fe2+(pH7),Fe3+,Fe2+,0.203,7.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH7) pH-dependent redox
+298,Fe3+/Fe2+(pH2),Fe3+,Fe2+,0.771,2.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH2) pH-dependent redox
+299,Fe3+/Fe2+(pH1),Fe3+,Fe2+,0.771,1.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH1) pH-dependent redox
+300,Cu2+/Cu+(pH7),Cu2+,Cu+,0.153,7.0,298.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+(pH7) pH-dependent redox
+301,Cu2+/Cu+(pH1),Cu2+,Cu+,0.153,1.0,298.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+(pH1) pH-dependent redox
+302,O2/H2O(pH7),O2,H2O,0.816,7.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH7) pH-dependent redox
+303,O2/H2O(pH14),O2,H2O,0.401,14.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH14) pH-dependent redox
+304,H+/H2(pH7),H+,H2,-0.414,7.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH7) pH-dependent redox
+305,H+/H2(pH14),H+,H2,-0.828,14.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH14) pH-dependent redox
+306,Cl2/Cl-(pH7),Cl2,Cl-,1.36,7.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2/Cl-(pH7) pH-dependent redox
+307,Br2/Br-(pH7),Br2,Br-,1.087,7.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2/Br-(pH7) pH-dependent redox
+308,I2/I-(pH7),I2,I-,0.536,7.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2/I-(pH7) pH-dependent redox
+309,Fe(OH)3/Fe(OH)2(pH7),Fe(OH)3,Fe(OH)2,-0.56,7.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe(OH)3/Fe(OH)2(pH7) pH-dependent redox
+310,Fe(OH)3/Fe(OH)2(pH14),Fe(OH)3,Fe(OH)2,-0.97,14.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe(OH)3/Fe(OH)2(pH14) pH-dependent redox
+311,Co(OH)3/Co(OH)2(pH7),Co(OH)3,Co(OH)2,0.17,7.0,298.15,mp-19009,mp-19006,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Co(OH)3/Co(OH)2(pH7) pH-dependent redox
+312,Co(OH)3/Co(OH)2(pH14),Co(OH)3,Co(OH)2,0.17,14.0,298.15,mp-19009,mp-19006,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Co(OH)3/Co(OH)2(pH14) pH-dependent redox
+313,Ni(OH)3/Ni(OH)2(pH7),Ni(OH)3,Ni(OH)2,0.48,7.0,298.15,mp-19009,mp-19006,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Ni(OH)3/Ni(OH)2(pH7) pH-dependent redox
+314,Ni(OH)3/Ni(OH)2(pH14),Ni(OH)3,Ni(OH)2,0.48,14.0,298.15,mp-19009,mp-19006,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Ni(OH)3/Ni(OH)2(pH14) pH-dependent redox
+315,MnO2/Mn2O3(pH7),MnO2,Mn2O3,0.15,7.0,298.15,mp-22526,mp-19017,P42/mnm,R-3c,Tetragonal,Rhombohedral,10.1063/1.555839,MnO2/Mn2O3(pH7) pH-dependent redox
+316,MnO2/Mn2O3(pH14),MnO2,Mn2O3,-0.2,14.0,298.15,mp-22526,mp-19017,P42/mnm,R-3c,Tetragonal,Rhombohedral,10.1063/1.555839,MnO2/Mn2O3(pH14) pH-dependent redox
+317,Ag2O/Ag(pH7),Ag2O,Ag,0.342,7.0,298.15,mp-124,mp-124,Pn-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag2O/Ag(pH7) pH-dependent redox
+318,Ag2O/Ag(pH14),Ag2O,Ag,0.342,14.0,298.15,mp-124,mp-124,Pn-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag2O/Ag(pH14) pH-dependent redox
+319,HgO/Hg(pH7),HgO,Hg,0.098,7.0,298.15,mp-1519,mp-1519,Pnma,R-3m,Orthorhombic,Rhombohedral,10.1063/1.555839,HgO/Hg(pH7) pH-dependent redox
+320,HgO/Hg(pH14),HgO,Hg,0.098,14.0,298.15,mp-1519,mp-1519,Pnma,R-3m,Orthorhombic,Rhombohedral,10.1063/1.555839,HgO/Hg(pH14) pH-dependent redox
+321,PbO2/PbO(pH7),PbO2,PbO,0.248,7.0,298.15,mp-20529,mp-20529,P4_2/mnm,P4_2/mnm,Tetragonal,Tetragonal,10.1063/1.555839,PbO2/PbO(pH7) pH-dependent redox
+322,PbO2/PbO(pH14),PbO2,PbO,0.248,14.0,298.15,mp-20529,mp-20529,P4_2/mnm,P4_2/mnm,Tetragonal,Tetragonal,10.1063/1.555839,PbO2/PbO(pH14) pH-dependent redox
+323,Co3O4/CoO(pH7),Co3O4,CoO,0.53,7.0,298.15,mp-18712,mp-19006,Fd-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Co3O4/CoO(pH7) pH-dependent redox
+324,Co3O4/CoO(pH14),Co3O4,CoO,0.53,14.0,298.15,mp-18712,mp-19006,Fd-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Co3O4/CoO(pH14) pH-dependent redox
+325,Cu2O/Cu(pH7),Cu2O,Cu,0.36,7.0,298.15,mp-554,mp-30,Pn-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Cu2O/Cu(pH7) pH-dependent redox
+326,Cu2O/Cu(pH14),Cu2O,Cu,0.36,14.0,298.15,mp-554,mp-30,Pn-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Cu2O/Cu(pH14) pH-dependent redox
+327,Fe3O4/Fe(pH7),Fe3O4,Fe,-0.44,7.0,298.15,mp-19306,mp-13,Fd-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe3O4/Fe(pH7) pH-dependent redox
+328,Fe3O4/Fe(pH14),Fe3O4,Fe,-0.85,14.0,298.15,mp-19306,mp-13,Fd-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe3O4/Fe(pH14) pH-dependent redox
+329,ZnO/Zn(pH7),ZnO,Zn,-0.762,7.0,298.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,ZnO/Zn(pH7) pH-dependent redox
+330,ZnO/Zn(pH14),ZnO,Zn,-1.26,14.0,298.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,ZnO/Zn(pH14) pH-dependent redox
+331,CdO/Cd(pH7),CdO,Cd,-0.403,7.0,298.15,mp-1519,mp-1519,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,CdO/Cd(pH7) pH-dependent redox
+332,CdO/Cd(pH14),CdO,Cd,-0.9,14.0,298.15,mp-1519,mp-1519,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,CdO/Cd(pH14) pH-dependent redox
+333,Al2O3/Al(pH7),Al2O3,Al,-1.662,7.0,298.15,mp-2664,mp-134,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Al2O3/Al(pH7) pH-dependent redox
+334,Al2O3/Al(pH14),Al2O3,Al,-2.31,14.0,298.15,mp-2664,mp-134,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Al2O3/Al(pH14) pH-dependent redox
+335,MgO/Mg(pH7),MgO,Mg,-2.372,7.0,298.15,mp-1265,mp-1104,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,MgO/Mg(pH7) pH-dependent redox
+336,MgO/Mg(pH14),MgO,Mg,-2.97,14.0,298.15,mp-1265,mp-1104,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,MgO/Mg(pH14) pH-dependent redox
+337,CaO/Ca(pH7),CaO,Ca,-2.868,7.0,298.15,mp-2605,mp-1018,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,CaO/Ca(pH7) pH-dependent redox
+338,CaO/Ca(pH14),CaO,Ca,-3.46,14.0,298.15,mp-2605,mp-1018,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,CaO/Ca(pH14) pH-dependent redox
+339,Fe3+/Fe2+(T=273K),Fe3+,Fe2+,0.772,0.0,273.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+ at T=273K
+340,Fe3+/Fe2+(T=323K),Fe3+,Fe2+,0.77,0.0,323.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+ at T=323K
+341,Fe3+/Fe2+(T=348K),Fe3+,Fe2+,0.768,0.0,348.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+ at T=348K
+342,Fe3+/Fe2+(T=373K),Fe3+,Fe2+,0.767,0.0,373.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+ at T=373K
+343,Cu2+/Cu(T=273K),Cu2+,Cu,0.344,0.0,273.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu at T=273K
+344,Cu2+/Cu(T=323K),Cu2+,Cu,0.34,0.0,323.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu at T=323K
+345,Cu2+/Cu(T=348K),Cu2+,Cu,0.338,0.0,348.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu at T=348K
+346,Cu2+/Cu(T=373K),Cu2+,Cu,0.337,0.0,373.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu at T=373K
+347,Zn2+/Zn(T=273K),Zn2+,Zn,-0.759,0.0,273.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn2+/Zn at T=273K
+348,Zn2+/Zn(T=323K),Zn2+,Zn,-0.765,0.0,323.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn2+/Zn at T=323K
+349,Zn2+/Zn(T=348K),Zn2+,Zn,-0.767,0.0,348.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn2+/Zn at T=348K
+350,Zn2+/Zn(T=373K),Zn2+,Zn,-0.77,0.0,373.15,mp-2133,mp-794,P63mc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn2+/Zn at T=373K
+351,Ag+/Ag(T=273K),Ag+,Ag,0.801,0.0,273.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag at T=273K
+352,Ag+/Ag(T=323K),Ag+,Ag,0.797,0.0,323.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag at T=323K
+353,Ag+/Ag(T=348K),Ag+,Ag,0.794,0.0,348.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag at T=348K
+354,Ag+/Ag(T=373K),Ag+,Ag,0.792,0.0,373.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag at T=373K
+355,Ni2+/Ni(T=273K),Ni2+,Ni,-0.255,0.0,273.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni2+/Ni at T=273K
+356,Ni2+/Ni(T=323K),Ni2+,Ni,-0.259,0.0,323.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni2+/Ni at T=323K
+357,Ni2+/Ni(T=348K),Ni2+,Ni,-0.26,0.0,348.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni2+/Ni at T=348K
+358,Ni2+/Ni(T=373K),Ni2+,Ni,-0.262,0.0,373.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni2+/Ni at T=373K
+359,Co2+/Co(T=273K),Co2+,Co,-0.278,0.0,273.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co2+/Co at T=273K
+360,Co2+/Co(T=323K),Co2+,Co,-0.282,0.0,323.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co2+/Co at T=323K
+361,Co2+/Co(T=348K),Co2+,Co,-0.283,0.0,348.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co2+/Co at T=348K
+362,Co2+/Co(T=373K),Co2+,Co,-0.285,0.0,373.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co2+/Co at T=373K
+363,Pb2+/Pb(T=273K),Pb2+,Pb,-0.125,0.0,273.15,mp-1518,mp-1518,P63/mmc,Fm-3m,Hexagonal,Cubic,10.1063/1.555839,Pb2+/Pb at T=273K
+364,Pb2+/Pb(T=323K),Pb2+,Pb,-0.127,0.0,323.15,mp-1518,mp-1518,P63/mmc,Fm-3m,Hexagonal,Cubic,10.1063/1.555839,Pb2+/Pb at T=323K
+365,Pb2+/Pb(T=348K),Pb2+,Pb,-0.128,0.0,348.15,mp-1518,mp-1518,P63/mmc,Fm-3m,Hexagonal,Cubic,10.1063/1.555839,Pb2+/Pb at T=348K
+366,Pb2+/Pb(T=373K),Pb2+,Pb,-0.129,0.0,373.15,mp-1518,mp-1518,P63/mmc,Fm-3m,Hexagonal,Cubic,10.1063/1.555839,Pb2+/Pb at T=373K
+367,Cd2+/Cd(T=273K),Cd2+,Cd,-0.401,0.0,273.15,mp-1519,mp-1519,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd2+/Cd at T=273K
+368,Cd2+/Cd(T=323K),Cd2+,Cd,-0.405,0.0,323.15,mp-1519,mp-1519,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd2+/Cd at T=323K
+369,Cd2+/Cd(T=348K),Cd2+,Cd,-0.408,0.0,348.15,mp-1519,mp-1519,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd2+/Cd at T=348K
+370,Cd2+/Cd(T=373K),Cd2+,Cd,-0.41,0.0,373.15,mp-1519,mp-1519,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd2+/Cd at T=373K
+371,Sn2+/Sn(T=273K),Sn2+,Sn,-0.139,0.0,273.15,mp-117,mp-117,P63/mmc,I41/amd,Hexagonal,Tetragonal,10.1063/1.555839,Sn2+/Sn at T=273K
+372,Sn2+/Sn(T=323K),Sn2+,Sn,-0.141,0.0,323.15,mp-117,mp-117,P63/mmc,I41/amd,Hexagonal,Tetragonal,10.1063/1.555839,Sn2+/Sn at T=323K
+373,Sn2+/Sn(T=348K),Sn2+,Sn,-0.143,0.0,348.15,mp-117,mp-117,P63/mmc,I41/amd,Hexagonal,Tetragonal,10.1063/1.555839,Sn2+/Sn at T=348K
+374,Sn2+/Sn(T=373K),Sn2+,Sn,-0.144,0.0,373.15,mp-117,mp-117,P63/mmc,I41/amd,Hexagonal,Tetragonal,10.1063/1.555839,Sn2+/Sn at T=373K
+375,Fe2+/Fe(T=273K),Fe2+,Fe,-0.446,0.0,273.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe2+/Fe at T=273K
+376,Fe2+/Fe(T=323K),Fe2+,Fe,-0.448,0.0,323.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe2+/Fe at T=323K
+377,Fe2+/Fe(T=348K),Fe2+,Fe,-0.45,0.0,348.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe2+/Fe at T=348K
+378,Fe2+/Fe(T=373K),Fe2+,Fe,-0.451,0.0,373.15,mp-19006,mp-13,Fm-3m,Im-3m,Cubic,Cubic,10.1063/1.555839,Fe2+/Fe at T=373K
+379,Mn2+/Mn(T=273K),Mn2+,Mn,-1.178,0.0,273.15,mp-19017,mp-1018,Pnma,I-43m,Orthorhombic,Cubic,10.1063/1.555839,Mn2+/Mn at T=273K
+380,Mn2+/Mn(T=323K),Mn2+,Mn,-1.182,0.0,323.15,mp-19017,mp-1018,Pnma,I-43m,Orthorhombic,Cubic,10.1063/1.555839,Mn2+/Mn at T=323K
+381,Mn2+/Mn(T=348K),Mn2+,Mn,-1.183,0.0,348.15,mp-19017,mp-1018,Pnma,I-43m,Orthorhombic,Cubic,10.1063/1.555839,Mn2+/Mn at T=348K
+382,Mn2+/Mn(T=373K),Mn2+,Mn,-1.185,0.0,373.15,mp-19017,mp-1018,Pnma,I-43m,Orthorhombic,Cubic,10.1063/1.555839,Mn2+/Mn at T=373K
+383,Cr3+/Cr(T=273K),Cr3+,Cr,-0.743,0.0,273.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Cr3+/Cr at T=273K
+384,Cr3+/Cr(T=323K),Cr3+,Cr,-0.745,0.0,323.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Cr3+/Cr at T=323K
+385,Cr3+/Cr(T=348K),Cr3+,Cr,-0.747,0.0,348.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Cr3+/Cr at T=348K
+386,Cr3+/Cr(T=373K),Cr3+,Cr,-0.748,0.0,373.15,mp-19317,mp-90,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Cr3+/Cr at T=373K
+387,Benzoquinone/Hydroquinone(pH7),C6H4O2,C6H4(OH)2,0.099,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Benzoquinone/Hydroquinone(pH7) + 2H+ + 2e- -> reduced form
+388,Naphthoquinone/Naphthohydroquinone(pH7),C10H6O2,C10H6(OH)2,-0.12,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Naphthoquinone/Naphthohydroquinone(pH7) + 2H+ + 2e- -> reduced form
+389,Anthraquinone/Anthrahydroquinone(pH7),C14H8O2,C14H8(OH)2,-0.45,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Anthraquinone/Anthrahydroquinone(pH7) + 2H+ + 2e- -> reduced form
+390,2-Methylanthraquinone/2-Methylanthrahydroquinone(pH7),C14H7(CH3)O2,C14H7(CH3)(OH)2,-0.63,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Methylanthraquinone/2-Methylanthrahydroquinone(pH7) + 2H+ + 2e- -> reduced form
+391,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone(pH7),C14H7(OH)O2,C14H7(OH)(OH)2,-0.55,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone(pH7) + 2H+ + 2e- -> reduced form
+392,Benzoquinone/Hydroquinone(pH14),C6H4O2,C6H4(OH)2,-0.713,14.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Benzoquinone/Hydroquinone(pH14) + 2H+ + 2e- -> reduced form
+393,Naphthoquinone/Naphthohydroquinone(pH14),C10H6O2,C10H6(OH)2,-0.932,14.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Naphthoquinone/Naphthohydroquinone(pH14) + 2H+ + 2e- -> reduced form
+394,Anthraquinone/Anthrahydroquinone(pH14),C14H8O2,C14H8(OH)2,-1.262,14.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Anthraquinone/Anthrahydroquinone(pH14) + 2H+ + 2e- -> reduced form
+395,2-Methylanthraquinone/2-Methylanthrahydroquinone(pH14),C14H7(CH3)O2,C14H7(CH3)(OH)2,-1.442,14.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Methylanthraquinone/2-Methylanthrahydroquinone(pH14) + 2H+ + 2e- -> reduced form
+396,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone(pH14),C14H7(OH)O2,C14H7(OH)(OH)2,-1.362,14.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Hydroxyanthraquinone/2-Hydroxyanthrahydroquinone(pH14) + 2H+ + 2e- -> reduced form
+397,"2,6-Dichlorobenzoquinone/2,6-Dichlorohydroquinone(pH7)",C6H2Cl2O2,C6H2Cl2(OH)2,0.11,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,6-Dichlorobenzoquinone/2,6-Dichlorohydroquinone(pH7) + 2H+ + 2e- -> reduced form"
+398,Tetrachlorobenzoquinone/Chloranil(pH7),C6Cl4O2,C6Cl4(OH)2,0.39,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Tetrachlorobenzoquinone/Chloranil(pH7) + 2H+ + 2e- -> reduced form
+399,Duroquinone/Durohydroquinone(pH7),C6(CH3)4O2,C6(CH3)4(OH)2,-0.089,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,Duroquinone/Durohydroquinone(pH7) + 2H+ + 2e- -> reduced form
+400,"2,5-Dimethylbenzoquinone/2,5-Dimethylhydroquinone(pH7)",C6H2(CH3)2O2,C6H2(CH3)2(OH)2,-0.019,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2,5-Dimethylbenzoquinone/2,5-Dimethylhydroquinone(pH7) + 2H+ + 2e- -> reduced form"
+401,2-Chlorobenzoquinone/2-Chlorohydroquinone(pH7),C6H3ClO2,C6H3Cl(OH)2,0.06,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Chlorobenzoquinone/2-Chlorohydroquinone(pH7) + 2H+ + 2e- -> reduced form
+402,2-Bromobenzoquinone/2-Bromohydroquinone(pH7),C6H3BrO2,C6H3Br(OH)2,0.07,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,2-Bromobenzoquinone/2-Bromohydroquinone(pH7) + 2H+ + 2e- -> reduced form
+403,"1,2-Benzoquinone/1,2-Dihydroxybenzene(pH7)",C6H4O2,C6H4(OH)2,0.19,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"1,2-Benzoquinone/1,2-Dihydroxybenzene(pH7) + 2H+ + 2e- -> reduced form"
+404,"9,10-Phenanthrenequinone/Phenanthrenehydroquinone(pH7)",C14H8O2,C14H8(OH)2,-0.16,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"9,10-Phenanthrenequinone/Phenanthrenehydroquinone(pH7) + 2H+ + 2e- -> reduced form"
+405,"5-Hydroxy-1,4-naphthoquinone/5-Hydroxy-1,4-naphthohydroquinone(pH7)",C10H5(OH)O2,C10H5(OH)(OH)2,-0.179,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"5-Hydroxy-1,4-naphthoquinone/5-Hydroxy-1,4-naphthohydroquinone(pH7) + 2H+ + 2e- -> reduced form"
+406,"2-Methyl-1,4-naphthoquinone(VitaminK3)/2-Methyl-1,4-naphthohydroquinone(pH7)",C10H5(CH3)O2,C10H5(CH3)(OH)2,-0.139,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1038/s41597-022-01832-2,"2-Methyl-1,4-naphthoquinone(VitaminK3)/2-Methyl-1,4-naphthohydroquinone(pH7) + 2H+ + 2e- -> reduced form"
+407,Fe3+/Fe2+(pH3),Fe3+,Fe2+,0.653,3.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH3) pH-dependent redox
+408,Fe3+/Fe2+(pH5),Fe3+,Fe2+,0.535,5.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH5) pH-dependent redox
+409,Fe3+/Fe2+(pH9),Fe3+,Fe2+,0.299,9.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH9) pH-dependent redox
+410,Fe3+/Fe2+(pH11),Fe3+,Fe2+,0.181,11.0,298.15,mp-19770,mp-19006,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe2+(pH11) pH-dependent redox
+411,MnO4-/MnO2(pH3),MnO4-,MnO2,1.236,3.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH3) pH-dependent redox
+412,MnO4-/MnO2(pH5),MnO4-,MnO2,1.118,5.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH5) pH-dependent redox
+413,MnO4-/MnO2(pH9),MnO4-,MnO2,0.882,9.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH9) pH-dependent redox
+414,MnO4-/MnO2(pH11),MnO4-,MnO2,0.764,11.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4-/MnO2(pH11) pH-dependent redox
+415,O2/H2O(pH3),O2,H2O,1.052,3.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH3) pH-dependent redox
+416,O2/H2O(pH5),O2,H2O,0.934,5.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH5) pH-dependent redox
+417,O2/H2O(pH9),O2,H2O,0.698,9.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH9) pH-dependent redox
+418,O2/H2O(pH11),O2,H2O,0.58,11.0,298.15,mp-12957,mp-69705,Cmca,P2_1/c,Orthorhombic,Monoclinic,10.1063/1.555839,O2/H2O(pH11) pH-dependent redox
+419,H+/H2(pH3),H+,H2,-0.177,3.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH3) pH-dependent redox
+420,H+/H2(pH5),H+,H2,-0.295,5.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH5) pH-dependent redox
+421,H+/H2(pH9),H+,H2,-0.531,9.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH9) pH-dependent redox
+422,H+/H2(pH11),H+,H2,-0.649,11.0,298.15,N/A,N/A,N/A,N/A,N/A,N/A,10.1063/1.555839,H+/H2(pH11) pH-dependent redox
+423,Cr2O7(2-)/Cr3+(pH3),Cr2O7(2-),Cr3+,1.03,3.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr3+(pH3) pH-dependent redox
+424,Cr2O7(2-)/Cr3+(pH5),Cr2O7(2-),Cr3+,0.79,5.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr3+(pH5) pH-dependent redox
+425,Cr2O7(2-)/Cr3+(pH9),Cr2O7(2-),Cr3+,0.31,9.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr3+(pH9) pH-dependent redox
+426,Cr2O7(2-)/Cr3+(pH11),Cr2O7(2-),Cr3+,0.07,11.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr2O7(2-)/Cr3+(pH11) pH-dependent redox
+427,Cl2/Cl-(pH3),Cl2,Cl-,1.358,3.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2/Cl-(pH3) pH-dependent redox
+428,Cl2/Cl-(pH5),Cl2,Cl-,1.358,5.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2/Cl-(pH5) pH-dependent redox
+429,Cl2/Cl-(pH9),Cl2,Cl-,1.358,9.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2/Cl-(pH9) pH-dependent redox
+430,Cl2/Cl-(pH11),Cl2,Cl-,1.358,11.0,298.15,mp-23153,mp-23208,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cl2/Cl-(pH11) pH-dependent redox
+431,Br2/Br-(pH3),Br2,Br-,1.087,3.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2/Br-(pH3) pH-dependent redox
+432,Br2/Br-(pH5),Br2,Br-,1.087,5.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2/Br-(pH5) pH-dependent redox
+433,Br2/Br-(pH9),Br2,Br-,1.087,9.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2/Br-(pH9) pH-dependent redox
+434,Br2/Br-(pH11),Br2,Br-,1.087,11.0,298.15,mp-23154,mp-23209,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Br2/Br-(pH11) pH-dependent redox
+435,I2/I-(pH3),I2,I-,0.536,3.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2/I-(pH3) pH-dependent redox
+436,I2/I-(pH5),I2,I-,0.536,5.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2/I-(pH5) pH-dependent redox
+437,I2/I-(pH9),I2,I-,0.536,9.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2/I-(pH9) pH-dependent redox
+438,I2/I-(pH11),I2,I-,0.536,11.0,298.15,mp-23155,mp-23210,Cmca,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,I2/I-(pH11) pH-dependent redox
+439,TEMPO+/TEMPO,TEMPO+,TEMPO,0.74,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,TEMPO+/TEMPO + e- -> reduced form
+440,TEMPO/TEMPOH,TEMPO,TEMPOH,0.28,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,TEMPO/TEMPOH + e- -> reduced form
+441,4-OH-TEMPO+/4-OH-TEMPO,4-OH-TEMPO+,4-OH-TEMPO,0.79,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,4-OH-TEMPO+/4-OH-TEMPO + e- -> reduced form
+442,4-NH2-TEMPO+/4-NH2-TEMPO,4-NH2-TEMPO+,4-NH2-TEMPO,0.66,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,4-NH2-TEMPO+/4-NH2-TEMPO + e- -> reduced form
+443,4-COOH-TEMPO+/4-COOH-TEMPO,4-COOH-TEMPO+,4-COOH-TEMPO,0.83,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,4-COOH-TEMPO+/4-COOH-TEMPO + e- -> reduced form
+444,4-CH3O-TEMPO+/4-CH3O-TEMPO,4-CH3O-TEMPO+,4-CH3O-TEMPO,0.61,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,4-CH3O-TEMPO+/4-CH3O-TEMPO + e- -> reduced form
+445,4-CN-TEMPO+/4-CN-TEMPO,4-CN-TEMPO+,4-CN-TEMPO,0.88,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,4-CN-TEMPO+/4-CN-TEMPO + e- -> reduced form
+446,Methyl viologen(2+)/Methyl viologen(+),MV2+,MV+,-0.45,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Methyl viologen(2+)/Methyl viologen(+) + e- -> reduced form
+447,Methyl viologen(+)/Methyl viologen(0),MV+,MV0,-0.81,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Methyl viologen(+)/Methyl viologen(0) + e- -> reduced form
+448,Ethyl viologen(2+)/Ethyl viologen(+),EV2+,EV+,-0.45,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Ethyl viologen(2+)/Ethyl viologen(+) + e- -> reduced form
+449,Benzyl viologen(2+)/Benzyl viologen(+),BV2+,BV+,-0.35,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Benzyl viologen(2+)/Benzyl viologen(+) + e- -> reduced form
+450,Ferrocenium/Ferrocene,Fc+,Fc,0.4,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Ferrocenium/Ferrocene + e- -> reduced form
+451,Ferrocene-carboxylic acid+/Ferrocene-carboxylic acid,Fc-COOH+,Fc-COOH,0.51,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Ferrocene-carboxylic acid+/Ferrocene-carboxylic acid + e- -> reduced form
+452,Ferrocene-methanol+/Ferrocene-methanol,Fc-CH2OH+,Fc-CH2OH,0.42,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Ferrocene-methanol+/Ferrocene-methanol + e- -> reduced form
+453,Acetylferrocenium/Acetylferrocene,AcFc+,AcFc,0.53,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Acetylferrocenium/Acetylferrocene + e- -> reduced form
+454,"1,1'-Diacetylferrocenium/1,1'-Diacetylferrocene",DiAcFc+,DiAcFc,0.64,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,"1,1'-Diacetylferrocenium/1,1'-Diacetylferrocene + e- -> reduced form"
+455,Decamethylferrocenium/Decamethylferrocene,DmFc+,DmFc,-0.48,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Decamethylferrocenium/Decamethylferrocene + e- -> reduced form
+456,Phenothiazine+/Phenothiazine,PTZ+,PTZ,0.73,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Phenothiazine+/Phenothiazine + e- -> reduced form
+457,Methylene blue(ox)/Methylene blue(red),MB+,MBH2+,0.011,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Methylene blue(ox)/Methylene blue(red) + e- -> reduced form
+458,Phenazine/Phenazine-reduced,Phenazine,Dihydrophenazine,-0.25,7.0,298.15,mp-6773,mp-6773,P2_1/c,P2_1/c,Monoclinic,Monoclinic,10.1039/D3DD00091E,Phenazine/Phenazine-reduced + e- -> reduced form
+459,LiMn2O4/LiMn2O4(discharged),Mn2O4,LiMn2O4,4.1,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiMn2O4/LiMn2O4(discharged) spinel redox
+460,Li4Ti5O12/Li7Ti5O12,Li4Ti5O12,Li7Ti5O12,1.55,7.0,298.15,mp-5560,mp-5561,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,Li4Ti5O12/Li7Ti5O12 spinel redox
+461,LiNi0.5Mn1.5O4/Ni0.5Mn1.5O4,Ni0.5Mn1.5O4,LiNi0.5Mn1.5O4,4.7,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiNi0.5Mn1.5O4/Ni0.5Mn1.5O4 spinel redox
+462,LiCo2O4/Co2O4,Co2O4,LiCo2O4,4.3,7.0,298.15,mp-18712,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiCo2O4/Co2O4 spinel redox
+463,LiCu0.5Mn1.5O4/Cu0.5Mn1.5O4,Cu0.5Mn1.5O4,LiCu0.5Mn1.5O4,4.9,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiCu0.5Mn1.5O4/Cu0.5Mn1.5O4 spinel redox
+464,LiFe0.5Mn1.5O4/Fe0.5Mn1.5O4,Fe0.5Mn1.5O4,LiFe0.5Mn1.5O4,4.1,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiFe0.5Mn1.5O4/Fe0.5Mn1.5O4 spinel redox
+465,LiCr0.5Mn1.5O4/Cr0.5Mn1.5O4,Cr0.5Mn1.5O4,LiCr0.5Mn1.5O4,4.5,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiCr0.5Mn1.5O4/Cr0.5Mn1.5O4 spinel redox
+466,LiAl0.5Mn1.5O4/Al0.5Mn1.5O4,Al0.5Mn1.5O4,LiAl0.5Mn1.5O4,4.3,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiAl0.5Mn1.5O4/Al0.5Mn1.5O4 spinel redox
+467,LiZn0.5Mn1.5O4/Zn0.5Mn1.5O4,Zn0.5Mn1.5O4,LiZn0.5Mn1.5O4,4.2,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiZn0.5Mn1.5O4/Zn0.5Mn1.5O4 spinel redox
+468,LiMg0.5Mn1.5O4/Mg0.5Mn1.5O4,Mg0.5Mn1.5O4,LiMg0.5Mn1.5O4,4.1,7.0,298.15,mp-18713,mp-18712,Fd-3m,Fd-3m,Cubic,Cubic,10.1021/acs.chemmater.9b02766,LiMg0.5Mn1.5O4/Mg0.5Mn1.5O4 spinel redox
+469,LiLaCoO3/LaCoO3,LaCoO3,LiLaCoO3,3.6,7.0,298.15,mp-4296,mp-4296,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1038/s41586-020-2639-3,LiLaCoO3/LaCoO3 perovskite redox
+470,LiLaNiO3/LaNiO3,LaNiO3,LiLaNiO3,3.8,7.0,298.15,mp-4296,mp-4296,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1038/s41586-020-2639-3,LiLaNiO3/LaNiO3 perovskite redox
+471,LiLaFeO3/LaFeO3,LaFeO3,LiLaFeO3,3.2,7.0,298.15,mp-4296,mp-4296,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1038/s41586-020-2639-3,LiLaFeO3/LaFeO3 perovskite redox
+472,LiLaMnO3/LaMnO3,LaMnO3,LiLaMnO3,3.0,7.0,298.15,mp-4296,mp-4296,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1038/s41586-020-2639-3,LiLaMnO3/LaMnO3 perovskite redox
+473,LiSrCoO3/SrCoO3,SrCoO3,LiSrCoO3,3.7,7.0,298.15,mp-4296,mp-4296,Pm-3m,Pm-3m,Cubic,Cubic,10.1038/s41586-020-2639-3,LiSrCoO3/SrCoO3 perovskite redox
+474,LiSrFeO3/SrFeO3,SrFeO3,LiSrFeO3,3.3,7.0,298.15,mp-4296,mp-4296,Pm-3m,Pm-3m,Cubic,Cubic,10.1038/s41586-020-2639-3,LiSrFeO3/SrFeO3 perovskite redox
+475,LiSrMnO3/SrMnO3,SrMnO3,LiSrMnO3,3.1,7.0,298.15,mp-4296,mp-4296,Pm-3m,Pm-3m,Cubic,Cubic,10.1038/s41586-020-2639-3,LiSrMnO3/SrMnO3 perovskite redox
+476,LiCaMnO3/CaMnO3,CaMnO3,LiCaMnO3,3.0,7.0,298.15,mp-4296,mp-4296,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1038/s41586-020-2639-3,LiCaMnO3/CaMnO3 perovskite redox
+477,LiBaFeO3/BaFeO3,BaFeO3,LiBaFeO3,3.4,7.0,298.15,mp-4296,mp-4296,Pm-3m,Pm-3m,Cubic,Cubic,10.1038/s41586-020-2639-3,LiBaFeO3/BaFeO3 perovskite redox
+478,LiLaCrO3/LaCrO3,LaCrO3,LiLaCrO3,3.5,7.0,298.15,mp-4296,mp-4296,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1038/s41586-020-2639-3,LiLaCrO3/LaCrO3 perovskite redox
+479,Fe3+/Fe(T=273K),Fe3+,Fe,0.038,0.0,273.15,mp-19770,mp-13,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe at T=273K
+480,Fe3+/Fe(T=323K),Fe3+,Fe,0.036,0.0,323.15,mp-19770,mp-13,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe at T=323K
+481,Fe3+/Fe(T=348K),Fe3+,Fe,0.034,0.0,348.15,mp-19770,mp-13,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe at T=348K
+482,Fe3+/Fe(T=373K),Fe3+,Fe,0.033,0.0,373.15,mp-19770,mp-13,R-3c,Im-3m,Rhombohedral,Cubic,10.1063/1.555839,Fe3+/Fe at T=373K
+483,Cu2+/Cu+(T=273K),Cu2+,Cu+,0.154,0.0,273.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+ at T=273K
+484,Cu2+/Cu+(T=323K),Cu2+,Cu+,0.152,0.0,323.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+ at T=323K
+485,Cu2+/Cu+(T=348K),Cu2+,Cu+,0.151,0.0,348.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+ at T=348K
+486,Cu2+/Cu+(T=373K),Cu2+,Cu+,0.15,0.0,373.15,mp-19009,mp-1833,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu2+/Cu+ at T=373K
+487,Ag+/Ag(pH7)(T=273K),Ag+,Ag(pH7),0.801,0.0,273.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag(pH7) at T=273K
+488,Ag+/Ag(pH7)(T=323K),Ag+,Ag(pH7),0.797,0.0,323.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag(pH7) at T=323K
+489,Ag+/Ag(pH7)(T=348K),Ag+,Ag(pH7),0.794,0.0,348.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag(pH7) at T=348K
+490,Ag+/Ag(pH7)(T=373K),Ag+,Ag(pH7),0.792,0.0,373.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag+/Ag(pH7) at T=373K
+491,Ce4+/Ce3+(T=273K),Ce4+,Ce3+,1.611,0.0,273.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Ce4+/Ce3+ at T=273K
+492,Ce4+/Ce3+(T=323K),Ce4+,Ce3+,1.609,0.0,323.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Ce4+/Ce3+ at T=323K
+493,Ce4+/Ce3+(T=348K),Ce4+,Ce3+,1.608,0.0,348.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Ce4+/Ce3+ at T=348K
+494,Ce4+/Ce3+(T=373K),Ce4+,Ce3+,1.606,0.0,373.15,mp-19359,mp-19358,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Ce4+/Ce3+ at T=373K
+495,Co3+/Co2+(T=273K),Co3+,Co2+,1.921,0.0,273.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Co3+/Co2+ at T=273K
+496,Co3+/Co2+(T=323K),Co3+,Co2+,1.918,0.0,323.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Co3+/Co2+ at T=323K
+497,Co3+/Co2+(T=348K),Co3+,Co2+,1.917,0.0,348.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Co3+/Co2+ at T=348K
+498,Co3+/Co2+(T=373K),Co3+,Co2+,1.915,0.0,373.15,mp-19009,mp-1024,R-3c,Fm-3m,Rhombohedral,Cubic,10.1063/1.555839,Co3+/Co2+ at T=373K
+499,V3+/V2+(T=273K),V3+,V2+,-0.254,0.0,273.15,mp-19365,mp-19364,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,V3+/V2+ at T=273K
+500,V3+/V2+(T=323K),V3+,V2+,-0.256,0.0,323.15,mp-19365,mp-19364,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,V3+/V2+ at T=323K
+501,V3+/V2+(T=348K),V3+,V2+,-0.258,0.0,348.15,mp-19365,mp-19364,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,V3+/V2+ at T=348K
+502,V3+/V2+(T=373K),V3+,V2+,-0.259,0.0,373.15,mp-19365,mp-19364,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,V3+/V2+ at T=373K
+503,Ti3+/Ti2+(T=273K),Ti3+,Ti2+,-0.368,0.0,273.15,mp-19359,mp-6773,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,Ti3+/Ti2+ at T=273K
+504,Ti3+/Ti2+(T=323K),Ti3+,Ti2+,-0.37,0.0,323.15,mp-19359,mp-6773,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,Ti3+/Ti2+ at T=323K
+505,Ti3+/Ti2+(T=348K),Ti3+,Ti2+,-0.371,0.0,348.15,mp-19359,mp-6773,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,Ti3+/Ti2+ at T=348K
+506,Ti3+/Ti2+(T=373K),Ti3+,Ti2+,-0.373,0.0,373.15,mp-19359,mp-6773,R-3c,P63/mmc,Rhombohedral,Hexagonal,10.1063/1.555839,Ti3+/Ti2+ at T=373K
+507,Mn3+/Mn2+(T=273K),Mn3+,Mn2+,1.512,0.0,273.15,mp-19017,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Mn3+/Mn2+ at T=273K
+508,Mn3+/Mn2+(T=323K),Mn3+,Mn2+,1.508,0.0,323.15,mp-19017,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Mn3+/Mn2+ at T=323K
+509,Mn3+/Mn2+(T=348K),Mn3+,Mn2+,1.507,0.0,348.15,mp-19017,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Mn3+/Mn2+ at T=348K
+510,Mn3+/Mn2+(T=373K),Mn3+,Mn2+,1.505,0.0,373.15,mp-19017,mp-19017,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Mn3+/Mn2+ at T=373K
+511,Cr3+/Cr2+(T=273K),Cr3+,Cr2+,-0.406,0.0,273.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr3+/Cr2+ at T=273K
+512,Cr3+/Cr2+(T=323K),Cr3+,Cr2+,-0.408,0.0,323.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr3+/Cr2+ at T=323K
+513,Cr3+/Cr2+(T=348K),Cr3+,Cr2+,-0.41,0.0,348.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr3+/Cr2+ at T=348K
+514,Cr3+/Cr2+(T=373K),Cr3+,Cr2+,-0.411,0.0,373.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,Cr3+/Cr2+ at T=373K
+515,Sn4+/Sn2+(T=273K),Sn4+,Sn2+,0.151,0.0,273.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1063/1.555839,Sn4+/Sn2+ at T=273K
+516,Sn4+/Sn2+(T=323K),Sn4+,Sn2+,0.149,0.0,323.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1063/1.555839,Sn4+/Sn2+ at T=323K
+517,Sn4+/Sn2+(T=348K),Sn4+,Sn2+,0.148,0.0,348.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1063/1.555839,Sn4+/Sn2+ at T=348K
+518,Sn4+/Sn2+(T=373K),Sn4+,Sn2+,0.147,0.0,373.15,mp-1179,mp-117,P4_2/mnm,I41/amd,Tetragonal,Tetragonal,10.1063/1.555839,Sn4+/Sn2+ at T=373K
+519,Hg2+/Hg(T=273K),Hg2+,Hg,0.853,0.0,273.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2+/Hg at T=273K
+520,Hg2+/Hg(T=323K),Hg2+,Hg,0.849,0.0,323.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2+/Hg at T=323K
+521,Hg2+/Hg(T=348K),Hg2+,Hg,0.848,0.0,348.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2+/Hg at T=348K
+522,Hg2+/Hg(T=373K),Hg2+,Hg,0.846,0.0,373.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg2+/Hg at T=373K
+523,Al3+/Al(T=273K),Al3+,Al,-1.661,0.0,273.15,mp-2664,mp-134,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Al3+/Al at T=273K
+524,Al3+/Al(T=323K),Al3+,Al,-1.663,0.0,323.15,mp-2664,mp-134,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Al3+/Al at T=323K
+525,Al3+/Al(T=348K),Al3+,Al,-1.665,0.0,348.15,mp-2664,mp-134,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Al3+/Al at T=348K
+526,Al3+/Al(T=373K),Al3+,Al,-1.666,0.0,373.15,mp-2664,mp-134,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Al3+/Al at T=373K
+527,MoO4(2-)/Mo,MoO4(2-),Mo,-0.913,0.0,298.15,mp-6773,mp-29,Cmcm,Im-3m,Orthorhombic,Cubic,10.1063/1.555839,MoO4(2-) + ne- -> Mo
+528,WO4(2-)/W,WO4(2-),W,-0.09,0.0,298.15,mp-6773,mp-19,Cmcm,Im-3m,Orthorhombic,Cubic,10.1063/1.555839,WO4(2-) + ne- -> W
+529,CrO4(2-)/Cr3+,CrO4(2-),Cr3+,0.55,0.0,298.15,mp-19317,mp-19317,R-3c,R-3c,Rhombohedral,Rhombohedral,10.1063/1.555839,CrO4(2-) + ne- -> Cr3+
+530,MnO4(2-)/MnO2,MnO4(2-),MnO2,0.6,0.0,298.15,mp-6773,mp-22526,Cmcm,P42/mnm,Orthorhombic,Tetragonal,10.1063/1.555839,MnO4(2-) + ne- -> MnO2
+531,Fe(CN)6(4-)/Fe(CN)6(3-),Fe(CN)6(4-),Fe(CN)6(3-),-0.358,0.0,298.15,mp-5561,mp-5560,Pnma,Pnma,Orthorhombic,Orthorhombic,10.1063/1.555839,Fe(CN)6(4-) + ne- -> Fe(CN)6(3-)
+532,Co(NH3)6(3+)/Co(NH3)6(2+),Co(NH3)6(3+),Co(NH3)6(2+),0.058,0.0,298.15,mp-1024,mp-1024,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Co(NH3)6(3+) + ne- -> Co(NH3)6(2+)
+533,PtCl4(2-)/Pt,PtCl4(2-),Pt,0.755,0.0,298.15,mp-126,mp-126,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,PtCl4(2-) + ne- -> Pt
+534,PtCl6(2-)/PtCl4(2-),PtCl6(2-),PtCl4(2-),0.68,0.0,298.15,mp-126,mp-126,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,PtCl6(2-) + ne- -> PtCl4(2-)
+535,PdCl4(2-)/Pd,PdCl4(2-),Pd,0.591,0.0,298.15,mp-4,mp-2,P4_2/mmc,Fm-3m,Tetragonal,Cubic,10.1063/1.555839,PdCl4(2-) + ne- -> Pd
+536,AuCl4-/Au,AuCl4-,Au,1.002,0.0,298.15,mp-12681,mp-81,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,AuCl4- + ne- -> Au
+537,AuCl2-/Au,AuCl2-,Au,1.154,0.0,298.15,mp-12681,mp-81,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,AuCl2- + ne- -> Au
+538,Hg2Cl2/Hg,Hg2Cl2,Hg,0.268,0.0,298.15,mp-22920,mp-1018,I4/mmm,R-3m,Tetragonal,Rhombohedral,10.1063/1.555839,Hg2Cl2 + ne- -> Hg
+539,Cu(NH3)4(2+)/Cu,Cu(NH3)4(2+),Cu,-0.02,0.0,298.15,mp-19009,mp-30,Pnma,Fm-3m,Orthorhombic,Cubic,10.1063/1.555839,Cu(NH3)4(2+) + ne- -> Cu
+540,Zn(NH3)4(2+)/Zn,Zn(NH3)4(2+),Zn,-1.04,0.0,298.15,mp-794,mp-794,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Zn(NH3)4(2+) + ne- -> Zn
+541,Cd(NH3)4(2+)/Cd,Cd(NH3)4(2+),Cd,-0.61,0.0,298.15,mp-1519,mp-1519,P63/mmc,P63/mmc,Hexagonal,Hexagonal,10.1063/1.555839,Cd(NH3)4(2+) + ne- -> Cd
+542,Ni(NH3)6(2+)/Ni,Ni(NH3)6(2+),Ni,-0.48,0.0,298.15,mp-1024,mp-23,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ni(NH3)6(2+) + ne- -> Ni
+543,Co(NH3)6(2+)/Co,Co(NH3)6(2+),Co,-0.43,0.0,298.15,mp-1024,mp-54,Fm-3m,P63/mmc,Cubic,Hexagonal,10.1063/1.555839,Co(NH3)6(2+) + ne- -> Co
+544,Ag(CN)2-/Ag,Ag(CN)2-,Ag,-0.31,0.0,298.15,mp-124,mp-124,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Ag(CN)2- + ne- -> Ag
+545,Au(CN)2-/Au,Au(CN)2-,Au,-0.6,0.0,298.15,mp-12681,mp-81,Fm-3m,Fm-3m,Cubic,Cubic,10.1063/1.555839,Au(CN)2- + ne- -> Au
+546,Hg(CN)2/Hg,Hg(CN)2,Hg,0.37,0.0,298.15,mp-1519,mp-1018,P63/mmc,R-3m,Hexagonal,Rhombohedral,10.1063/1.555839,Hg(CN)2 + ne- -> Hg
