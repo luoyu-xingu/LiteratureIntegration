@@ -58,10 +58,15 @@ impl PaperService {
             }
         }
 
-        for keyword_name in &meta.keywords {
-            let keyword_id = uuid::Uuid::new_v4().to_string();
-            repo.add_keyword(&keyword_id, keyword_name, &paper.id).await?;
-        }
+        let paper_id = paper.id.clone();
+        let keyword_futures = meta.keywords.iter().map(|keyword_name| {
+            let paper_id = paper_id.clone();
+            async move {
+                let keyword_id = uuid::Uuid::new_v4().to_string();
+                repo.add_keyword(&keyword_id, keyword_name, &paper_id).await
+            }
+        });
+        futures::future::try_join_all(keyword_futures).await?;
 
         let keywords = repo.get_paper_keywords(&paper.id).await?;
 
@@ -80,14 +85,16 @@ impl PaperService {
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
         let paper = repo.get_paper(id).await?
             .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
+        let (first_author, corresponding_author, keywords) = tokio::join!(
+            repo.get_paper_first_author(id),
+            repo.get_paper_corresponding_author(id),
+            repo.get_paper_keywords(id)
+        );
         Ok(PaperDetailResponse {
             paper,
-            first_author,
-            corresponding_author,
-            keywords,
+            first_author: first_author?,
+            corresponding_author: corresponding_author?,
+            keywords: keywords?,
         })
     }
 
