@@ -4,6 +4,7 @@ mod common;
 mod tests {
     use crate::common::{app, spawn_neo4j};
     use axum::body::Body;
+    use tower::util::ServiceExt;
     use http_body_util::BodyExt;
     use hyper::{Request, StatusCode};
     use serde_json::json;
