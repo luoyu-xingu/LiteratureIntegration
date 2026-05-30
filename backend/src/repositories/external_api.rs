@@ -1,5 +1,8 @@
 use crate::errors::AppError;
 use serde::Deserialize;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Deserialize)]
 struct CrossrefWork {
@@ -51,18 +54,58 @@ pub struct AuthorMeta {
 
 pub struct ExternalApiClient {
     client: reqwest::Client,
+    cache: Arc<Mutex<HashMap<String, PaperMeta>>>,
 }
 
 impl ExternalApiClient {
     pub fn new() -> Self {
+        // 优化HTTP客户端配置
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .pool_idle_timeout(std::time::Duration::from_secs(90))
+            .pool_max_idle_per_host(10)
+            .tcp_keepalive(std::time::Duration::from_secs(60))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+
         Self {
-            client: reqwest::Client::new(),
+            client,
+            cache: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    #[cfg(test)]
+    pub async fn insert_into_cache(&self, key: String, paper: PaperMeta) {
+        let mut cache = self.cache.lock().await;
+        cache.insert(key, paper);
+    }
+
+    #[cfg(test)]
+    pub async fn cache_contains_key(&self, key: &str) -> bool {
+        let cache = self.cache.lock().await;
+        cache.contains_key(key)
+    }
+
+    #[cfg(test)]
+    pub async fn get_from_cache(&self, key: &str) -> Option<PaperMeta> {
+        let cache = self.cache.lock().await;
+        cache.get(key).cloned()
     }
 
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
         let trimmed = identifier.trim();
-        if trimmed.starts_with("10.") || trimmed.to_lowercase().starts_with("doi:") {
+        let cache_key = trimmed.to_lowercase();
+
+        // 首先检查缓存
+        {
+            let cache = self.cache.lock().await;
+            if let Some(paper) = cache.get(&cache_key) {
+                return Ok(paper.clone());
+            }
+        }
+
+        let result = if trimmed.starts_with("10.") || trimmed.to_lowercase().starts_with("doi:") {
             let doi = trimmed
                 .trim_start_matches("doi:")
                 .trim_start_matches("DOI:")
@@ -70,7 +113,15 @@ impl ExternalApiClient {
             self.fetch_by_doi(doi).await
         } else {
             self.fetch_by_arxiv(trimmed).await
+        };
+
+        // 如果成功，缓存结果
+        if let Ok(ref paper) = result {
+            let mut cache = self.cache.lock().await;
+            cache.insert(cache_key, paper.clone());
         }
+
+        result
     }
 
     async fn fetch_by_doi(&self, doi: &str) -> Result<PaperMeta, AppError> {
