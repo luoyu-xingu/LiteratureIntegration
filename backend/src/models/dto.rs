@@ -1,5 +1,30 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportAuthorInput {
+    pub id: String,
+    pub name: String,
+    pub orcid: Option<String>,
+    pub is_first: bool,
+    pub is_corresponding: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BatchImportResult {
+    pub paper: super::paper::Paper,
+    pub first_author: Option<super::author::Author>,
+    pub corresponding_author: Option<super::author::Author>,
+    pub keywords: Vec<super::keyword::Keyword>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PaperFullExportRow {
+    pub paper: super::paper::Paper,
+    pub first_author_name: Option<String>,
+    pub corresponding_author_name: Option<String>,
+    pub keywords: Vec<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateWorkspaceRequest {
     pub name: String,

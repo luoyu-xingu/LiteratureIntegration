@@ -1,5 +1,6 @@
 use crate::errors::AppError;
 use serde::Deserialize;
+use std::sync::OnceLock;
 
 #[derive(Debug, Deserialize)]
 struct CrossrefWork {
@@ -53,11 +54,21 @@ pub struct ExternalApiClient {
     client: reqwest::Client,
 }
 
+static SHARED_CLIENT: OnceLock<ExternalApiClient> = OnceLock::new();
+
 impl ExternalApiClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .pool_max_idle_per_host(8)
+                .tcp_keepalive(std::time::Duration::from_secs(60))
+                .build()
+                .expect("Failed to build reqwest client"),
         }
+    }
+
+    pub fn shared() -> &'static Self {
+        SHARED_CLIENT.get_or_init(ExternalApiClient::new)
     }
 
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {

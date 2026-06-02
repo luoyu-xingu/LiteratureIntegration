@@ -398,6 +398,199 @@ impl Neo4jRepo {
         Ok((nodes, links))
     }
 
+    pub async fn batch_import_paper(
+        &self,
+        workspace_id: &str,
+        paper_id: &str,
+        title: &str,
+        doi: Option<&str>,
+        arxiv_id: Option<&str>,
+        abstract_text: Option<&str>,
+        year: Option<i32>,
+        journal: Option<&str>,
+        created_at: &str,
+        added_at: &str,
+        authors: &[crate::models::dto::ImportAuthorInput],
+        keywords: &[String],
+    ) -> Result<crate::models::dto::BatchImportResult, AppError> {
+        use std::collections::HashMap;
+
+        let author_records: Vec<HashMap<String, neo4rs::BoltType>> = authors
+            .iter()
+            .map(|a| {
+                let mut m: HashMap<String, neo4rs::BoltType> = HashMap::new();
+                m.insert("id".to_string(), neo4rs::BoltType::from(a.id.clone()));
+                m.insert("name".to_string(), neo4rs::BoltType::from(a.name.clone()));
+                m.insert("orcid".to_string(), neo4rs::BoltType::from(a.orcid.clone().unwrap_or_default()));
+                m.insert("is_first".to_string(), neo4rs::BoltType::from(a.is_first));
+                m.insert("is_corresponding".to_string(), neo4rs::BoltType::from(a.is_corresponding));
+                m
+            })
+            .collect();
+
+        let keyword_records: Vec<HashMap<String, neo4rs::BoltType>> = keywords
+            .iter()
+            .enumerate()
+            .map(|(i, name)| {
+                let mut m: HashMap<String, neo4rs::BoltType> = HashMap::new();
+                m.insert("id".to_string(), neo4rs::BoltType::from(format!("kw-{}-{}", paper_id, i)));
+                m.insert("name".to_string(), neo4rs::BoltType::from(name.clone()));
+                m
+            })
+            .collect();
+
+        let cypher = "MATCH (w:Workspace {id: $workspace_id}) \
+                      MERGE (p:Paper {doi: COALESCE($doi, ''), arxiv_id: COALESCE($arxiv_id, '')}) \
+                      ON CREATE SET p.id = $paper_id, p.title = $title, p.abstract = $abstract_text, \
+                      p.year = $year, p.journal = $journal, p.created_at = $created_at, p.user_notes = '' \
+                      MERGE (w)-[:CONTAINS {added_at: $added_at}]->(p) \
+                      WITH p, collect($authors) AS author_list, collect($keywords) AS keyword_list \
+                      UNWIND author_list AS a \
+                      MERGE (au:Author {name: a.name, orcid: COALESCE(a.orcid, '')}) \
+                      ON CREATE SET au.id = a.id \
+                      WITH p, a, au, keyword_list \
+                      FOREACH (_ IN CASE WHEN a.is_first THEN [1] ELSE [] END | \
+                          MERGE (au)-[:FIRST_AUTHOR_OF]->(p)) \
+                      WITH p, a, au, keyword_list \
+                      FOREACH (_ IN CASE WHEN a.is_corresponding THEN [1] ELSE [] END | \
+                          MERGE (au)-[:CORRESPONDING_AUTHOR_OF]->(p)) \
+                      WITH p, keyword_list \
+                      UNWIND keyword_list AS k \
+                      MERGE (kw:Keyword {name: k.name}) \
+                      ON CREATE SET kw.id = k.id \
+                      MERGE (p)-[:HAS_KEYWORD]->(kw) \
+                      WITH p \
+                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p) \
+                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) \
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword) \
+                      RETURN p, \
+                             collect(DISTINCT fa) AS first_authors, \
+                             collect(DISTINCT ca) AS corresponding_authors, \
+                             collect(DISTINCT kw) AS kw_nodes";
+
+        let q = neo4rs::query(cypher)
+            .param("workspace_id", workspace_id)
+            .param("paper_id", paper_id)
+            .param("title", title)
+            .param("doi", doi.unwrap_or("").to_string())
+            .param("arxiv_id", arxiv_id.unwrap_or("").to_string())
+            .param("abstract_text", abstract_text.unwrap_or("").to_string())
+            .param("year", year.unwrap_or(0))
+            .param("journal", journal.unwrap_or("").to_string())
+            .param("created_at", created_at.to_string())
+            .param("added_at", added_at.to_string())
+            .param("authors", author_records)
+            .param("keywords", keyword_records);
+
+        let mut result = run_query!(self, q);
+        let row = result.next().await?.ok_or_else(|| AppError::Neo4jError("No row returned".into()))?;
+
+        let paper_node: neo4rs::Node = row.get("p")?;
+        let first_nodes: Vec<neo4rs::Node> = row.get("first_authors").unwrap_or_default();
+        let corr_nodes: Vec<neo4rs::Node> = row.get("corresponding_authors").unwrap_or_default();
+        let kw_nodes: Vec<neo4rs::Node> = row.get("kw_nodes").unwrap_or_default();
+
+        Ok(crate::models::dto::BatchImportResult {
+            paper: paper_from_node(&paper_node),
+            first_author: first_nodes.first().map(author_from_node),
+            corresponding_author: corr_nodes.first().map(author_from_node),
+            keywords: kw_nodes.iter().map(keyword_from_node).collect(),
+        })
+    }
+
+    pub async fn get_paper_full(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::models::dto::PaperDetailResponse>, AppError> {
+        let cypher = "MATCH (p:Paper {id: $id}) \
+                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p) \
+                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) \
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword) \
+                      RETURN p, \
+                             collect(DISTINCT fa) AS first_authors, \
+                             collect(DISTINCT ca) AS corresponding_authors, \
+                             collect(DISTINCT kw) AS kw_nodes";
+
+        let query = neo4rs::query(cypher).param("id", id);
+        let mut result = run_query!(self, query);
+        let row = match result.next().await? {
+            Some(r) => r,
+            None => return Ok(None),
+        };
+
+        let paper_node: neo4rs::Node = row.get("p")?;
+        let first_nodes: Vec<neo4rs::Node> = row.get("first_authors").unwrap_or_default();
+        let corr_nodes: Vec<neo4rs::Node> = row.get("corresponding_authors").unwrap_or_default();
+        let kw_nodes: Vec<neo4rs::Node> = row.get("kw_nodes").unwrap_or_default();
+
+        Ok(Some(crate::models::dto::PaperDetailResponse {
+            paper: paper_from_node(&paper_node),
+            first_author: first_nodes.first().map(author_from_node),
+            corresponding_author: corr_nodes.first().map(author_from_node),
+            keywords: kw_nodes.iter().map(keyword_from_node).collect(),
+        }))
+    }
+
+    pub async fn get_papers_full_for_export(
+        &self,
+        workspace_id: &str,
+        author_ids: Option<&[String]>,
+        keyword_ids: Option<&[String]>,
+    ) -> Result<Vec<crate::models::dto::PaperFullExportRow>, AppError> {
+        let mut cypher = String::from(
+            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper) \
+             OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p) \
+             OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) \
+             OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword)",
+        );
+
+        if let Some(aids) = author_ids {
+            if !aids.is_empty() {
+                cypher.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p) WHERE a.id IN $author_ids");
+            }
+        }
+        if let Some(kids) = keyword_ids {
+            if !kids.is_empty() {
+                cypher.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE k.id IN $keyword_ids");
+            }
+        }
+
+        cypher.push_str(
+            " WITH DISTINCT p, fa, ca \
+              WITH p, \
+                   head(collect(DISTINCT fa)) AS first_author, \
+                   head(collect(DISTINCT ca)) AS corresponding_author, \
+                   collect(DISTINCT kw.name) AS keyword_names \
+              RETURN p, first_author, corresponding_author, keyword_names \
+              ORDER BY p.year DESC",
+        );
+
+        let mut q = neo4rs::query(&cypher).param("workspace_id", workspace_id.to_string());
+        if let Some(aids) = author_ids {
+            q = q.param("author_ids", aids.to_vec());
+        }
+        if let Some(kids) = keyword_ids {
+            q = q.param("keyword_ids", kids.to_vec());
+        }
+
+        let mut result = run_query!(self, q);
+        let mut rows = Vec::new();
+        while let Some(row) = result.next().await? {
+            let paper_node: neo4rs::Node = row.get("p")?;
+            let first: Option<neo4rs::Node> = row.get("first_author").ok();
+            let corr: Option<neo4rs::Node> = row.get("corresponding_author").ok();
+            let kw_names: Vec<String> = row.get("keyword_names").unwrap_or_default();
+
+            rows.push(crate::models::dto::PaperFullExportRow {
+                paper: paper_from_node(&paper_node),
+                first_author_name: first.as_ref().map(|n| n.get::<String>("name").unwrap_or_default()),
+                corresponding_author_name: corr.as_ref().map(|n| n.get::<String>("name").unwrap_or_default()),
+                keywords: kw_names,
+            });
+        }
+        Ok(rows)
+    }
+
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper) \
                       WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query \
