@@ -1851,6 +1851,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "gray_matter",
+ "once_cell",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

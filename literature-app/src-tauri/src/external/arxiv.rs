@@ -1,10 +1,18 @@
 use crate::models::paper::Paper;
+use once_cell::sync::Lazy;
 use super::ImportResult;
+
+static SHARED_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::Client::builder()
+        .user_agent("LiteratureApp/1.0 (mailto:test@example.com)")
+        .pool_idle_timeout(std::time::Duration::from_secs(30))
+        .build()
+        .unwrap_or_default()
+});
 
 pub async fn fetch_by_arxiv_id(arxiv_id: &str) -> anyhow::Result<ImportResult> {
     let url = format!("https://export.arxiv.org/api/query?id_list={}", arxiv_id);
-    let client = reqwest::Client::new();
-    let resp = client.get(&url).send().await?;
+    let resp = SHARED_CLIENT.get(&url).send().await?;
 
     if !resp.status().is_success() {
         anyhow::bail!("arXiv API error: {}", resp.status());
@@ -16,15 +24,11 @@ pub async fn fetch_by_arxiv_id(arxiv_id: &str) -> anyhow::Result<ImportResult> {
         .ok_or_else(|| anyhow::anyhow!("Paper not found on arXiv: {}", arxiv_id))?;
 
     let title = extract_between(&entry, "<title>", "</title>")
-        .unwrap_or_default()
-        .trim()
-        .replace('\n', " ")
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
+        .map(collapse_whitespace)
+        .unwrap_or_default();
 
     let abstract_text = extract_between(&entry, "<summary>", "</summary>")
-        .map(|s| s.trim().replace('\n', " ").split_whitespace().collect::<Vec<_>>().join(" "));
+        .map(collapse_whitespace);
 
     let first_author = extract_between(&entry, "<name>", "</name>").map(|s| s.to_string());
 
@@ -47,8 +51,53 @@ pub async fn fetch_by_arxiv_id(arxiv_id: &str) -> anyhow::Result<ImportResult> {
     Ok(ImportResult { paper, abstract_text })
 }
 
+fn collapse_whitespace(s: &str) -> String {
+    let trimmed = s.trim();
+    let mut result = String::with_capacity(trimmed.len());
+    let mut in_ws = false;
+    for ch in trimmed.chars() {
+        if ch.is_whitespace() {
+            if !in_ws {
+                result.push(' ');
+                in_ws = true;
+            }
+        } else {
+            result.push(ch);
+            in_ws = false;
+        }
+    }
+    result.shrink_to_fit();
+    result
+}
+
 fn extract_between<'a>(text: &'a str, start: &str, end: &str) -> Option<&'a str> {
     let s = text.find(start)? + start.len();
     let e = text[s..].find(end)? + s;
     Some(&text[s..e])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_collapse_whitespace_basic() {
+        assert_eq!(collapse_whitespace("Hello   World"), "Hello World");
+    }
+
+    #[test]
+    fn test_collapse_whitespace_newlines() {
+        assert_eq!(collapse_whitespace("\n  Hello\n  World\n"), "Hello World");
+    }
+
+    #[test]
+    fn test_collapse_whitespace_empty() {
+        assert_eq!(collapse_whitespace("   "), "");
+    }
+
+    #[test]
+    fn test_extract_between() {
+        let s = "<title>Hello</title>";
+        assert_eq!(extract_between(s, "<title>", "</title>"), Some("Hello"));
+    }
 }

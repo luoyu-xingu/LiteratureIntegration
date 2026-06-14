@@ -1,6 +1,5 @@
-use axum::Router;
+use axum::{Router, ServiceExt};
 use neo4rs::Graph;
-use tower::ServiceExt;
 
 pub fn app(graph: Graph) -> Router {
     use axum::routing::{get, post, put, delete};

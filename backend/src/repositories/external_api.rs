@@ -1,4 +1,5 @@
 use crate::errors::AppError;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -49,24 +50,50 @@ pub struct AuthorMeta {
     pub is_corresponding: bool,
 }
 
+static SHARED_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
+    reqwest::Client::builder()
+        .user_agent("LiteratureIntegration/1.0 (mailto:contact@example.com)")
+        .pool_idle_timeout(std::time::Duration::from_secs(30))
+        .build()
+        .unwrap_or_default()
+});
+
 pub struct ExternalApiClient {
-    client: reqwest::Client,
+    client: &'static reqwest::Client,
+}
+
+impl Default for ExternalApiClient {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ExternalApiClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: &SHARED_CLIENT,
         }
     }
 
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
         let trimmed = identifier.trim();
-        if trimmed.starts_with("10.") || trimmed.to_lowercase().starts_with("doi:") {
-            let doi = trimmed
-                .trim_start_matches("doi:")
-                .trim_start_matches("DOI:")
-                .trim();
+        let lower_head = trimmed
+            .get(..5.min(trimmed.len()))
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        if trimmed.starts_with("10.") || lower_head == "doi:/" || lower_head.starts_with("doi:") {
+            let mut idx = 0usize;
+            let bytes = trimmed.as_bytes();
+            let prefix = b"doi:";
+            while idx + prefix.len() <= bytes.len()
+                && bytes[idx..idx + prefix.len()].eq_ignore_ascii_case(prefix)
+            {
+                idx += prefix.len();
+                while idx < bytes.len() && bytes[idx].is_ascii_whitespace() {
+                    idx += 1;
+                }
+            }
+            let doi = trimmed[idx..].trim();
             self.fetch_by_doi(doi).await
         } else {
             self.fetch_by_arxiv(trimmed).await
@@ -78,10 +105,6 @@ impl ExternalApiClient {
         let resp = self
             .client
             .get(&url)
-            .header(
-                "User-Agent",
-                "LiteratureIntegration/1.0 (mailto:contact@example.com)",
-            )
             .send()
             .await
             .map_err(|e| {
@@ -105,35 +128,46 @@ impl ExternalApiClient {
         let work = body.message;
         let title = work
             .title
-            .and_then(|t| t.into_iter().next())
+            .and_then(|mut t| if t.is_empty() { None } else { Some(t.swap_remove(0)) })
             .unwrap_or_default();
         let year = work
             .published_print
             .and_then(|d| d.date_parts.into_iter().next())
             .and_then(|p| p.into_iter().next());
 
-        let mut authors: Vec<AuthorMeta> = Vec::new();
-        if let Some(crossref_authors) = work.author {
-            let total = crossref_authors.len();
-            for (i, a) in crossref_authors.iter().enumerate() {
-                let given = a.given.as_deref().unwrap_or("");
-                let family = a.family.as_deref().unwrap_or("");
-                let name = if given.is_empty() {
-                    family.to_string()
-                } else {
-                    format!("{} {}", given, family)
-                };
-                authors.push(AuthorMeta {
-                    name,
-                    orcid: a.orcid.clone(),
-                    is_first: i == 0,
-                    is_corresponding: i == total - 1,
-                });
+        let authors: Vec<AuthorMeta> = match work.author {
+            Some(crossref_authors) => {
+                let total = crossref_authors.len();
+                let mut result = Vec::with_capacity(total);
+                for (i, a) in crossref_authors.iter().enumerate() {
+                    let name = match (&a.given, &a.family) {
+                        (Some(g), Some(f)) => {
+                            let mut s = String::with_capacity(g.len() + f.len() + 1);
+                            s.push_str(g);
+                            s.push(' ');
+                            s.push_str(f);
+                            s
+                        }
+                        (None, Some(f)) => f.clone(),
+                        (Some(g), None) => g.clone(),
+                        _ => String::new(),
+                    };
+                    result.push(AuthorMeta {
+                        name,
+                        orcid: a.orcid.clone(),
+                        is_first: i == 0,
+                        is_corresponding: i == total - 1,
+                    });
+                }
+                result
             }
-        }
+            None => Vec::new(),
+        };
 
         let keywords = work.subject.unwrap_or_default();
-        let journal = work.container_title.and_then(|t| t.into_iter().next());
+        let journal = work
+            .container_title
+            .and_then(|mut t| if t.is_empty() { None } else { Some(t.swap_remove(0)) });
 
         Ok(PaperMeta {
             title,
@@ -174,16 +208,15 @@ impl ExternalApiClient {
 
         let author_names = extract_xml_tags(&body, "name");
         let total = author_names.len();
-        let authors: Vec<AuthorMeta> = author_names
-            .into_iter()
-            .enumerate()
-            .map(|(i, name)| AuthorMeta {
+        let mut authors: Vec<AuthorMeta> = Vec::with_capacity(total);
+        for (i, name) in author_names.into_iter().enumerate() {
+            authors.push(AuthorMeta {
                 name,
                 orcid: None,
                 is_first: i == 0,
                 is_corresponding: i == total - 1,
-            })
-            .collect();
+            });
+        }
 
         Ok(PaperMeta {
             title,
@@ -199,31 +232,100 @@ impl ExternalApiClient {
 }
 
 fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let start = xml.find(&open)?;
+    let mut open_buf = [0u8; 64];
+    let open = format_tag_into(&mut open_buf, tag, false);
+    let mut close_buf = [0u8; 64];
+    let close = format_tag_into(&mut close_buf, tag, true);
+
+    let start = xml.find(open)?;
     let content_start = start + open.len();
-    let content_end = xml[content_start..].find(&close)?;
-    Some(xml[content_start..content_start + content_end].trim().to_string())
+    let content_end = xml[content_start..].find(close)?;
+    let raw = &xml[content_start..content_start + content_end];
+    let trimmed = raw.trim();
+    if trimmed.len() == raw.len() {
+        Some(trimmed.to_string())
+    } else {
+        let mut s = String::with_capacity(trimmed.len());
+        s.push_str(trimmed);
+        Some(s)
+    }
 }
 
 fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let mut results = Vec::new();
-    let mut search_from = 0;
-    while let Some(start) = xml[search_from..].find(&open) {
-        let content_start = search_from + start + open.len();
-        if let Some(content_end) = xml[content_start..].find(&close) {
-            results.push(
-                xml[content_start..content_start + content_end]
-                    .trim()
-                    .to_string(),
-            );
-            search_from = content_start + content_end + close.len();
+    let mut open_buf = [0u8; 64];
+    let open = format_tag_into(&mut open_buf, tag, false);
+    let mut close_buf = [0u8; 64];
+    let close = format_tag_into(&mut close_buf, tag, true);
+
+    let mut results: Vec<String> = Vec::with_capacity(8);
+    let mut search_from = 0usize;
+    while let Some(rel_start) = xml[search_from..].find(open) {
+        let content_start = search_from + rel_start + open.len();
+        if let Some(rel_end) = xml[content_start..].find(close) {
+            let content_end = content_start + rel_end;
+            let raw = &xml[content_start..content_end];
+            results.push(raw.trim().to_string());
+            search_from = content_end + close.len();
         } else {
             break;
         }
     }
+    results.shrink_to_fit();
     results
+}
+
+fn format_tag_into<'a>(buf: &'a mut [u8; 64], tag: &str, closing: bool) -> &'a str {
+    let bytes = buf.as_mut_slice();
+    let mut idx = 0;
+    bytes[idx] = b'<';
+    idx += 1;
+    if closing {
+        bytes[idx] = b'/';
+        idx += 1;
+    }
+    let tag_bytes = tag.as_bytes();
+    if idx + tag_bytes.len() + 1 < bytes.len() {
+        bytes[idx..idx + tag_bytes.len()].copy_from_slice(tag_bytes);
+        idx += tag_bytes.len();
+    }
+    bytes[idx] = b'>';
+    idx += 1;
+    std::str::from_utf8(&bytes[..idx]).unwrap_or("")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_xml_tag_basic() {
+        let xml = "<title>Hello World</title>";
+        assert_eq!(extract_xml_tag(xml, "title"), Some("Hello World".to_string()));
+    }
+
+    #[test]
+    fn test_extract_xml_tag_trimmed() {
+        let xml = "<title>\n  Hello\n  World\n</title>";
+        assert_eq!(extract_xml_tag(xml, "title"), Some("Hello\n  World".to_string()));
+    }
+
+    #[test]
+    fn test_extract_xml_tag_missing() {
+        let xml = "<foo>bar</foo>";
+        assert_eq!(extract_xml_tag(xml, "title"), None);
+    }
+
+    #[test]
+    fn test_extract_xml_tags_multiple() {
+        let xml = "<author><name>A</name></author><author><name>B</name></author><author><name>C</name></author>";
+        let names = extract_xml_tags(xml, "name");
+        assert_eq!(names, vec!["A", "B", "C"]);
+    }
+
+    #[test]
+    fn test_extract_xml_tags_empty() {
+        let xml = "<nothing>here</nothing>";
+        let names = extract_xml_tags(xml, "name");
+        assert!(names.is_empty());
+    }
 }
