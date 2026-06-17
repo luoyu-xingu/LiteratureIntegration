@@ -31,37 +31,60 @@ impl PaperService {
         let added_at = chrono::Utc::now().to_rfc3339();
         repo.add_paper_to_workspace(workspace_id, &paper.id, &added_at).await?;
 
+        // Create all authors in parallel
+        let author_futures: Vec<_> = meta.authors.iter().map(|author_meta| {
+            let author_id = uuid::Uuid::new_v4().to_string();
+            let author_meta = author_meta.clone();
+            async move {
+                repo.create_author_if_not_exists(
+                    &author_id,
+                    &author_meta.name,
+                    author_meta.orcid.as_deref(),
+                ).await.map(|author| (author, author_meta.is_first, author_meta.is_corresponding))
+            }
+        }).collect();
+
+        let results = futures::future::join_all(author_futures).await;
         let mut first_author = None;
         let mut corresponding_author = None;
 
-        for author_meta in &meta.authors {
-            let author_id = uuid::Uuid::new_v4().to_string();
-            let author = repo.create_author_if_not_exists(
-                &author_id,
-                &author_meta.name,
-                author_meta.orcid.as_deref(),
-            ).await?;
-
-            if author_meta.is_first {
-                repo.link_first_author(&author.id, &paper.id).await?;
+        for result in results {
+            let (author, is_first, is_corresponding) = result?;
+            if is_first {
                 first_author = Some(author.clone());
             }
-            if author_meta.is_corresponding {
-                repo.link_corresponding_author(&author.id, &paper.id).await?;
+            if is_corresponding {
                 corresponding_author = Some(author.clone());
             }
         }
 
+        // Link first author
+        if let Some(ref fa) = first_author {
+            repo.link_first_author(&fa.id, &paper.id).await?;
+        }
+
+        // Link corresponding author
+        if let Some(ref ca) = corresponding_author {
+            repo.link_corresponding_author(&ca.id, &paper.id).await?;
+        }
+
+        // Link co-authors if first and corresponding are different
         if let (Some(ref fa), Some(ref ca)) = (&first_author, &corresponding_author) {
             if fa.id != ca.id {
                 repo.link_co_authors(&fa.id, &ca.id, workspace_id).await?;
             }
         }
 
-        for keyword_name in &meta.keywords {
+        // Add all keywords in parallel
+        let keyword_futures: Vec<_> = meta.keywords.iter().map(|keyword_name| {
             let keyword_id = uuid::Uuid::new_v4().to_string();
-            repo.add_keyword(&keyword_id, keyword_name, &paper.id).await?;
-        }
+            let paper_id = paper.id.clone();
+            let keyword_name = keyword_name.clone();
+            async move {
+                repo.add_keyword(&keyword_id, &keyword_name, &paper_id).await
+            }
+        }).collect();
+        futures::future::join_all(keyword_futures).await;
 
         let keywords = repo.get_paper_keywords(&paper.id).await?;
 
@@ -80,14 +103,18 @@ impl PaperService {
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
         let paper = repo.get_paper(id).await?
             .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
+
+        let (first_author, corresponding_author, keywords) = tokio::join!(
+            repo.get_paper_first_author(id),
+            repo.get_paper_corresponding_author(id),
+            repo.get_paper_keywords(id),
+        );
+
         Ok(PaperDetailResponse {
             paper,
-            first_author,
-            corresponding_author,
-            keywords,
+            first_author: first_author?,
+            corresponding_author: corresponding_author?,
+            keywords: keywords?,
         })
     }
 

@@ -7,6 +7,7 @@ mod tests {
     use http_body_util::BodyExt;
     use hyper::{Request, StatusCode};
     use serde_json::json;
+    use tower::util::ServiceExt;
 
     #[tokio::test]
     async fn test_health_check() {
