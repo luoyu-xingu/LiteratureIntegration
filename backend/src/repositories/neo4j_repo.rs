@@ -238,6 +238,41 @@ impl Neo4jRepo {
         Ok(papers)
     }
 
+    pub async fn get_paper_detail(&self, paper_id: &str) -> Result<(Option<crate::models::paper::Paper>, Option<crate::models::author::Author>, Option<crate::models::author::Author>, Vec<crate::models::keyword::Keyword>), AppError> {
+        // Single query to fetch paper with first author, corresponding author, and keywords
+        let query = neo4rs::query(
+            "MATCH (p:Paper {id: $paper_id}) \
+             OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p) \
+             OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) \
+             OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword) \
+             RETURN p, fa, ca, collect(DISTINCT k) AS keywords"
+        )
+        .param("paper_id", paper_id);
+
+        let mut result = run_query!(self, query);
+        if let Some(row) = result.next().await? {
+            let paper_node: Option<neo4rs::Node> = row.get("p").ok();
+            let paper = paper_node.map(|node| paper_from_node(&node));
+
+            let first_author = row.get::<Option<neo4rs::Node>>("fa").ok()
+                .flatten()
+                .map(|node| author_from_node(&node));
+
+            let corresponding_author = row.get::<Option<neo4rs::Node>>("ca").ok()
+                .flatten()
+                .map(|node| author_from_node(&node));
+
+            let keyword_nodes: Vec<neo4rs::Node> = row.get("keywords").unwrap_or_default();
+            let keywords: Vec<crate::models::keyword::Keyword> = keyword_nodes.iter()
+                .map(keyword_from_node)
+                .collect();
+
+            Ok((paper, first_author, corresponding_author, keywords))
+        } else {
+            Ok((None, None, None, vec![]))
+        }
+    }
+
     pub async fn get_paper(&self, id: &str) -> Result<Option<crate::models::paper::Paper>, AppError> {
         let query = neo4rs::query("MATCH (p:Paper {id: $id}) RETURN p").param("id", id);
         let mut result = run_query!(self, query);
@@ -358,44 +393,36 @@ impl Neo4jRepo {
     }
 
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
-        let nodes_query = neo4rs::query(
+        // Single query to fetch both nodes and links in one database round-trip
+        let query = neo4rs::query(
             "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author) \
              WITH a, count(p) AS paper_count, \
              CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) AND EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper)) \
                   THEN 'both' WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) THEN 'first' ELSE 'corresponding' END AS author_type \
-             RETURN a.id AS id, a.name AS name, paper_count, author_type ORDER BY a.name"
-        )
-        .param("workspace_id", workspace_id);
-
-        let mut result = run_query!(self, nodes_query);
-        let mut nodes = Vec::new();
-        while let Some(row) = result.next().await? {
-            nodes.push(crate::models::dto::GraphNode {
-                id: row.get::<String>("id")?,
-                name: row.get::<String>("name")?,
-                paper_count: row.get::<i32>("paper_count")?,
-                author_type: row.get::<String>("author_type")?,
-            });
-        }
-
-        let links_query = neo4rs::query(
-            "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author) \
+             WITH collect({id: a.id, name: a.name, paper_count: paper_count, author_type: author_type}) AS nodes \
+             OPTIONAL MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author) \
              WHERE a1.id < a2.id \
-             RETURN a1.id AS source, a2.id AS target, r.paper_count AS paper_count"
+             WITH nodes, collect({source: a1.id, target: a2.id, paper_count: r.paper_count}) AS links \
+             RETURN nodes, links"
         )
         .param("workspace_id", workspace_id);
 
-        let mut link_result = run_query!(self, links_query);
-        let mut links = Vec::new();
-        while let Some(row) = link_result.next().await? {
-            links.push(crate::models::dto::GraphLink {
-                source: row.get::<String>("source")?,
-                target: row.get::<String>("target")?,
-                paper_count: row.get::<i32>("paper_count")?,
-            });
-        }
+        let mut result = run_query!(self, query);
+        if let Some(row) = result.next().await? {
+            let nodes: Vec<crate::models::dto::GraphNode> = row.get::<Vec<serde_json::Value>>("nodes")?
+                .into_iter()
+                .filter_map(|v| serde_json::from_value(v).ok())
+                .collect();
 
-        Ok((nodes, links))
+            let links: Vec<crate::models::dto::GraphLink> = row.get::<Vec<serde_json::Value>>("links")?
+                .into_iter()
+                .filter_map(|v| serde_json::from_value(v).ok())
+                .collect();
+
+            Ok((nodes, links))
+        } else {
+            Ok((vec![], vec![]))
+        }
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
