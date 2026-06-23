@@ -78,17 +78,8 @@ impl PaperService {
     }
 
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
-        let paper = repo.get_paper(id).await?
-            .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
-        Ok(PaperDetailResponse {
-            paper,
-            first_author,
-            corresponding_author,
-            keywords,
-        })
+        repo.get_paper_detail(id).await?
+            .ok_or_else(|| AppError::PaperNotFound(id.to_string()))
     }
 
     pub async fn update(repo: &Neo4jRepo, id: &str, req: UpdatePaperRequest) -> Result<Paper, AppError> {

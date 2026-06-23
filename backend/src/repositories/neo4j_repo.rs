@@ -249,6 +249,37 @@ impl Neo4jRepo {
         }
     }
 
+    pub async fn get_paper_detail(&self, id: &str) -> Result<Option<crate::models::dto::PaperDetailResponse>, AppError> {
+        let cypher = "MATCH (p:Paper {id: $id}) 
+                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
+                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      RETURN p, fa, ca, collect(k) as keywords";
+        
+        let query = neo4rs::query(cypher).param("id", id);
+        let mut result = run_query!(self, query);
+        
+        if let Some(row) = result.next().await? {
+            let paper_node: neo4rs::Node = row.get("p")?;
+            let paper = paper_from_node(&paper_node);
+            
+            let first_author: Option<neo4rs::Node> = row.get("fa").ok();
+            let corresponding_author: Option<neo4rs::Node> = row.get("ca").ok();
+            
+            let keyword_nodes: Vec<neo4rs::Node> = row.get("keywords").unwrap_or_default();
+            let keywords: Vec<crate::models::keyword::Keyword> = keyword_nodes.iter().map(keyword_from_node).collect();
+            
+            Ok(Some(crate::models::dto::PaperDetailResponse {
+                paper,
+                first_author: first_author.map(|n| author_from_node(&n)),
+                corresponding_author: corresponding_author.map(|n| author_from_node(&n)),
+                keywords,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn update_paper_notes(&self, id: &str, user_notes: &str) -> Result<Option<crate::models::paper::Paper>, AppError> {
         let query = neo4rs::query(
             "MATCH (p:Paper {id: $id}) SET p.user_notes = $user_notes RETURN p"
@@ -359,10 +390,10 @@ impl Neo4jRepo {
 
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
         let nodes_query = neo4rs::query(
-            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author) \
-             WITH a, count(p) AS paper_count, \
-             CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) AND EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper)) \
-                  THEN 'both' WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) THEN 'first' ELSE 'corresponding' END AS author_type \
+            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
+             WITH a, count(DISTINCT p) AS paper_count,
+                  CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) AND EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper))
+                       THEN 'both' WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) THEN 'first' ELSE 'corresponding' END AS author_type
              RETURN a.id AS id, a.name AS name, paper_count, author_type ORDER BY a.name"
         )
         .param("workspace_id", workspace_id);
@@ -379,8 +410,8 @@ impl Neo4jRepo {
         }
 
         let links_query = neo4rs::query(
-            "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author) \
-             WHERE a1.id < a2.id \
+            "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
+             WHERE a1.id < a2.id
              RETURN a1.id AS source, a2.id AS target, r.paper_count AS paper_count"
         )
         .param("workspace_id", workspace_id);
