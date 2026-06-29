@@ -223,6 +223,82 @@ impl Neo4jRepo {
         Ok(())
     }
 
+    pub async fn create_authors_batch(
+        &self,
+        authors: &[(String, String, Option<String>)],
+    ) -> Result<Vec<crate::models::author::Author>, AppError> {
+        let ids: Vec<&str> = authors.iter().map(|a| a.0.as_str()).collect();
+        let names: Vec<&str> = authors.iter().map(|a| a.1.as_str()).collect();
+        let orcids: Vec<&str> = authors.iter().map(|a| a.2.as_deref().unwrap_or("")).collect();
+
+        let query = neo4rs::query(
+            "UNWIND range(0, size($ids)-1) AS i \
+             MERGE (a:Author {name: $names[i], orcid: $orcids[i]}) \
+             ON CREATE SET a.id = $ids[i] \
+             RETURN a"
+        )
+        .param("ids", ids)
+        .param("names", names)
+        .param("orcids", orcids);
+
+        let mut result = run_query!(self, query);
+        let mut created_authors = Vec::new();
+        while let Some(row) = result.next().await? {
+            let node: neo4rs::Node = row.get("a")?;
+            created_authors.push(author_from_node(&node));
+        }
+        Ok(created_authors)
+    }
+
+    pub async fn add_keywords_batch(
+        &self,
+        keywords: &[(String, String)],
+        paper_id: &str,
+    ) -> Result<(), AppError> {
+        let ids: Vec<&str> = keywords.iter().map(|k| k.0.as_str()).collect();
+        let names: Vec<&str> = keywords.iter().map(|k| k.1.as_str()).collect();
+
+        let query = neo4rs::query(
+            "UNWIND range(0, size($ids)-1) AS i \
+             MERGE (k:Keyword {name: $names[i]}) \
+             ON CREATE SET k.id = $ids[i] \
+             WITH k MATCH (p:Paper {id: $paper_id}) \
+             MERGE (p)-[:HAS_KEYWORD]->(k)"
+        )
+        .param("ids", ids)
+        .param("names", names)
+        .param("paper_id", paper_id);
+
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
+        Ok(())
+    }
+
+    pub async fn link_authors_to_paper_batch(
+        &self,
+        first_author_id: Option<&str>,
+        corresponding_author_id: Option<&str>,
+        paper_id: &str,
+    ) -> Result<(), AppError> {
+        let query = neo4rs::query(
+            "MATCH (p:Paper {id: $paper_id}) \
+             WITH p \
+             OPTIONAL MATCH (fa:Author {id: $first_author_id}) \
+             OPTIONAL MATCH (ca:Author {id: $corresponding_author_id}) \
+             FOREACH(_ IN CASE WHEN fa IS NOT NULL THEN [1] ELSE [] END | \
+               MERGE (fa)-[:FIRST_AUTHOR_OF]->(p)) \
+             FOREACH(_ IN CASE WHEN ca IS NOT NULL THEN [1] ELSE [] END | \
+               MERGE (ca)-[:CORRESPONDING_AUTHOR_OF]->(p))"
+        )
+        .param("paper_id", paper_id)
+        .param("first_author_id", first_author_id)
+        .param("corresponding_author_id", corresponding_author_id);
+
+        let mut result = run_query!(self, query);
+        let _ = result.next().await;
+        Ok(())
+    }
+
     pub async fn list_papers_in_workspace(&self, workspace_id: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let query = neo4rs::query(
             "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper) RETURN p ORDER BY p.year DESC"
@@ -324,6 +400,36 @@ impl Neo4jRepo {
             keywords.push(keyword_from_node(&node));
         }
         Ok(keywords)
+    }
+
+    pub async fn get_paper_detail(&self, paper_id: &str) -> Result<Option<(crate::models::paper::Paper, Option<crate::models::author::Author>, Option<crate::models::author::Author>, Vec<crate::models::keyword::Keyword>)>, AppError> {
+        let query = neo4rs::query(
+            "MATCH (p:Paper {id: $paper_id})
+             OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
+             OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
+             OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+             RETURN p, fa, ca, collect(k) AS keywords"
+        )
+        .param("paper_id", paper_id);
+
+        let mut result = run_query!(self, query);
+        if let Some(row) = result.next().await? {
+            let paper_node: neo4rs::Node = row.get("p")?;
+            let first_author: Option<neo4rs::Node> = row.get("fa").ok();
+            let corresponding_author: Option<neo4rs::Node> = row.get("ca").ok();
+            let keyword_nodes: Vec<neo4rs::Node> = row.get("keywords").unwrap_or_default();
+            
+            let keywords: Vec<crate::models::keyword::Keyword> = keyword_nodes.iter().map(keyword_from_node).collect();
+            
+            Ok(Some((
+                paper_from_node(&paper_node),
+                first_author.map(|node| author_from_node(&node)),
+                corresponding_author.map(|node| author_from_node(&node)),
+                keywords,
+            )))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn list_authors_in_workspace(&self, workspace_id: &str) -> Result<Vec<crate::models::author::Author>, AppError> {

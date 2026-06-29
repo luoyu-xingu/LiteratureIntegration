@@ -54,10 +54,25 @@ pub struct ExternalApiClient {
 }
 
 impl ExternalApiClient {
+    fn create_client() -> reqwest::Client {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .build()
+            .expect("Failed to create HTTP client")
+    }
+
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: Self::create_client(),
         }
+    }
+
+    pub fn shared() -> &'static Self {
+        static INSTANCE: std::sync::OnceLock<ExternalApiClient> = std::sync::OnceLock::new();
+        INSTANCE.get_or_init(|| Self {
+            client: Self::create_client(),
+        })
     }
 
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
@@ -163,16 +178,63 @@ impl ExternalApiClient {
             )));
         }
 
-        let body = resp.text().await.map_err(|e| {
+        let body = resp.bytes().await.map_err(|e| {
             AppError::ExternalApiError(format!("Failed to read arXiv response: {}", e))
         })?;
 
-        let title = extract_xml_tag(&body, "title").unwrap_or_default();
-        let summary = extract_xml_tag(&body, "summary");
-        let published = extract_xml_tag(&body, "published");
-        let year = published.and_then(|p| p.get(..4).and_then(|y| y.parse::<i32>().ok()));
+        let mut reader = quick_xml::Reader::from_reader(body.as_ref());
+        reader.trim_text(true);
 
-        let author_names = extract_xml_tags(&body, "name");
+        let mut title = String::new();
+        let mut summary = None;
+        let mut published = String::new();
+        let mut author_names = Vec::new();
+        let mut in_author = false;
+        let mut buf = Vec::new();
+
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Ok(quick_xml::events::Event::Start(e)) => {
+                    match e.name().as_ref() {
+                        b"title" => {
+                            if let Ok(quick_xml::events::Event::Text(t)) = reader.read_event_into(&mut buf) {
+                                title = t.unescape().unwrap_or_default().to_string();
+                            }
+                        }
+                        b"summary" => {
+                            if let Ok(quick_xml::events::Event::Text(t)) = reader.read_event_into(&mut buf) {
+                                summary = Some(t.unescape().unwrap_or_default().to_string());
+                            }
+                        }
+                        b"published" => {
+                            if let Ok(quick_xml::events::Event::Text(t)) = reader.read_event_into(&mut buf) {
+                                published = t.unescape().unwrap_or_default().to_string();
+                            }
+                        }
+                        b"author" => {
+                            in_author = true;
+                        }
+                        b"name" if in_author => {
+                            if let Ok(quick_xml::events::Event::Text(t)) = reader.read_event_into(&mut buf) {
+                                author_names.push(t.unescape().unwrap_or_default().to_string());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(quick_xml::events::Event::End(e)) => {
+                    if e.name().as_ref() == b"author" {
+                        in_author = false;
+                    }
+                }
+                Ok(quick_xml::events::Event::Eof) => break,
+                Err(_) => break,
+                _ => {}
+            }
+            buf.clear();
+        }
+
+        let year = published.get(..4).and_then(|y| y.parse::<i32>().ok());
         let total = author_names.len();
         let authors: Vec<AuthorMeta> = author_names
             .into_iter()
@@ -196,34 +258,4 @@ impl ExternalApiClient {
             arxiv_id: Some(arxiv_id.to_string()),
         })
     }
-}
-
-fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let start = xml.find(&open)?;
-    let content_start = start + open.len();
-    let content_end = xml[content_start..].find(&close)?;
-    Some(xml[content_start..content_start + content_end].trim().to_string())
-}
-
-fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let mut results = Vec::new();
-    let mut search_from = 0;
-    while let Some(start) = xml[search_from..].find(&open) {
-        let content_start = search_from + start + open.len();
-        if let Some(content_end) = xml[content_start..].find(&close) {
-            results.push(
-                xml[content_start..content_start + content_end]
-                    .trim()
-                    .to_string(),
-            );
-            search_from = content_start + content_end + close.len();
-        } else {
-            break;
-        }
-    }
-    results
 }

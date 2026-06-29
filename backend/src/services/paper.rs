@@ -1,15 +1,14 @@
 use crate::errors::AppError;
 use crate::models::dto::{PaperDetailResponse, ImportPaperRequest, UpdatePaperRequest};
 use crate::models::paper::Paper;
-use crate::repositories::external_api::ExternalApiClient;
+use crate::repositories::external_api;
 use crate::repositories::neo4j_repo::Neo4jRepo;
 
 pub struct PaperService;
 
 impl PaperService {
     pub async fn import(repo: &Neo4jRepo, workspace_id: &str, req: ImportPaperRequest) -> Result<PaperDetailResponse, AppError> {
-        let client = ExternalApiClient::new();
-        let meta = client.fetch_by_identifier(&req.identifier).await?;
+        let meta = external_api::ExternalApiClient::shared().fetch_by_identifier(&req.identifier).await?;
 
         let _workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
@@ -31,26 +30,26 @@ impl PaperService {
         let added_at = chrono::Utc::now().to_rfc3339();
         repo.add_paper_to_workspace(workspace_id, &paper.id, &added_at).await?;
 
-        let mut first_author = None;
-        let mut corresponding_author = None;
+        let authors_data: Vec<(String, String, Option<String>)> = meta.authors.iter()
+            .map(|am| (uuid::Uuid::new_v4().to_string(), am.name.clone(), am.orcid.clone()))
+            .collect();
 
-        for author_meta in &meta.authors {
-            let author_id = uuid::Uuid::new_v4().to_string();
-            let author = repo.create_author_if_not_exists(
-                &author_id,
-                &author_meta.name,
-                author_meta.orcid.as_deref(),
-            ).await?;
+        let authors = repo.create_authors_batch(&authors_data).await?;
 
-            if author_meta.is_first {
-                repo.link_first_author(&author.id, &paper.id).await?;
-                first_author = Some(author.clone());
-            }
-            if author_meta.is_corresponding {
-                repo.link_corresponding_author(&author.id, &paper.id).await?;
-                corresponding_author = Some(author.clone());
-            }
-        }
+        let first_author = authors.iter()
+            .enumerate()
+            .find(|(i, _)| meta.authors[*i].is_first)
+            .map(|(_, a)| a.clone());
+
+        let corresponding_author = authors.iter()
+            .enumerate()
+            .find(|(i, _)| meta.authors[*i].is_corresponding)
+            .map(|(_, a)| a.clone());
+
+        let first_author_id = first_author.as_ref().map(|a| a.id.as_str());
+        let corresponding_author_id = corresponding_author.as_ref().map(|a| a.id.as_str());
+
+        repo.link_authors_to_paper_batch(first_author_id, corresponding_author_id, &paper.id).await?;
 
         if let (Some(ref fa), Some(ref ca)) = (&first_author, &corresponding_author) {
             if fa.id != ca.id {
@@ -58,10 +57,11 @@ impl PaperService {
             }
         }
 
-        for keyword_name in &meta.keywords {
-            let keyword_id = uuid::Uuid::new_v4().to_string();
-            repo.add_keyword(&keyword_id, keyword_name, &paper.id).await?;
-        }
+        let keywords_data: Vec<(String, String)> = meta.keywords.iter()
+            .map(|kn| (uuid::Uuid::new_v4().to_string(), kn.clone()))
+            .collect();
+
+        repo.add_keywords_batch(&keywords_data, &paper.id).await?;
 
         let keywords = repo.get_paper_keywords(&paper.id).await?;
 
@@ -78,11 +78,8 @@ impl PaperService {
     }
 
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
-        let paper = repo.get_paper(id).await?
+        let (paper, first_author, corresponding_author, keywords) = repo.get_paper_detail(id).await?
             .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
         Ok(PaperDetailResponse {
             paper,
             first_author,
