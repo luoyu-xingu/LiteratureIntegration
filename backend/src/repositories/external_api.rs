@@ -1,5 +1,6 @@
 use crate::errors::AppError;
 use serde::Deserialize;
+use lazy_static::lazy_static;
 
 #[derive(Debug, Deserialize)]
 struct CrossrefWork {
@@ -49,17 +50,17 @@ pub struct AuthorMeta {
     pub is_corresponding: bool,
 }
 
-pub struct ExternalApiClient {
-    client: reqwest::Client,
+lazy_static! {
+    static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .expect("Failed to build HTTP client");
 }
 
-impl ExternalApiClient {
-    pub fn new() -> Self {
-        Self {
-            client: reqwest::Client::new(),
-        }
-    }
+pub struct ExternalApiClient;
 
+impl ExternalApiClient {
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
         let trimmed = identifier.trim();
         if trimmed.starts_with("10.") || trimmed.to_lowercase().starts_with("doi:") {
@@ -75,8 +76,7 @@ impl ExternalApiClient {
 
     async fn fetch_by_doi(&self, doi: &str) -> Result<PaperMeta, AppError> {
         let url = format!("https://api.crossref.org/works/{}", doi);
-        let resp = self
-            .client
+        let resp = HTTP_CLIENT
             .get(&url)
             .header(
                 "User-Agent",
@@ -149,8 +149,7 @@ impl ExternalApiClient {
 
     async fn fetch_by_arxiv(&self, arxiv_id: &str) -> Result<PaperMeta, AppError> {
         let url = format!("http://export.arxiv.org/api/query?id_list={}", arxiv_id);
-        let resp = self
-            .client
+        let resp = HTTP_CLIENT
             .get(&url)
             .send()
             .await

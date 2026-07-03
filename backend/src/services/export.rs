@@ -16,6 +16,10 @@ impl ExportService {
         let workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
 
+        let paper_ids: Vec<String> = papers.iter().map(|p| p.id.clone()).collect();
+        let (first_authors, corr_authors, keywords_map) =
+            repo.get_paper_authors_and_keywords_batch(&paper_ids).await?;
+
         let mut md = format!("# 工作区: {}\n\n", workspace.name);
         md.push_str(&format!("> 导出时间: {}\n", chrono::Utc::now().format("%Y-%m-%d %H:%M")));
         md.push_str(&format!("> 论文数量: {}\n\n---\n\n", papers.len()));
@@ -25,14 +29,14 @@ impl ExportService {
             md.push_str(&format!("- **年份**: {} | **期刊**: {}\n", paper.year.map(|y| y.to_string()).unwrap_or_default(), paper.journal.as_deref().unwrap_or("")));
             md.push_str(&format!("- **DOI**: {}\n", paper.doi.as_deref().unwrap_or("")));
 
-            let first_author = repo.get_paper_first_author(&paper.id).await?;
-            let corr_author = repo.get_paper_corresponding_author(&paper.id).await?;
+            let first_author = first_authors.get(&paper.id).cloned().flatten();
+            let corr_author = corr_authors.get(&paper.id).cloned().flatten();
             md.push_str(&format!("- **一作**: {} | **通讯**: {}\n",
                 first_author.map(|a| a.name).unwrap_or_default(),
                 corr_author.map(|a| a.name).unwrap_or_default()
             ));
 
-            let keywords = repo.get_paper_keywords(&paper.id).await?;
+            let keywords = keywords_map.get(&paper.id).cloned().unwrap_or_default();
             let kw_str: Vec<String> = keywords.iter().map(|k| k.name.clone()).collect();
             md.push_str(&format!("- **关键词**: {}\n\n", kw_str.join(", ")));
 

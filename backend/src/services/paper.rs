@@ -8,8 +8,7 @@ pub struct PaperService;
 
 impl PaperService {
     pub async fn import(repo: &Neo4jRepo, workspace_id: &str, req: ImportPaperRequest) -> Result<PaperDetailResponse, AppError> {
-        let client = ExternalApiClient::new();
-        let meta = client.fetch_by_identifier(&req.identifier).await?;
+        let meta = ExternalApiClient.fetch_by_identifier(&req.identifier).await?;
 
         let _workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
@@ -80,14 +79,18 @@ impl PaperService {
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
         let paper = repo.get_paper(id).await?
             .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
+        
+        let (first_author, corresponding_author, keywords) = tokio::join!(
+            repo.get_paper_first_author(id),
+            repo.get_paper_corresponding_author(id),
+            repo.get_paper_keywords(id)
+        );
+        
         Ok(PaperDetailResponse {
             paper,
-            first_author,
-            corresponding_author,
-            keywords,
+            first_author: first_author?,
+            corresponding_author: corresponding_author?,
+            keywords: keywords?,
         })
     }
 

@@ -474,6 +474,81 @@ impl Neo4jRepo {
         }
         Ok(papers)
     }
+
+    pub async fn get_paper_authors_and_keywords_batch(&self, paper_ids: &[String]) -> Result<(
+        std::collections::HashMap<String, Option<crate::models::author::Author>>,
+        std::collections::HashMap<String, Option<crate::models::author::Author>>,
+        std::collections::HashMap<String, Vec<crate::models::keyword::Keyword>>,
+    ), AppError> {
+        if paper_ids.is_empty() {
+            return Ok((
+                std::collections::HashMap::new(),
+                std::collections::HashMap::new(),
+                std::collections::HashMap::new(),
+            ));
+        }
+
+        let (first_authors, corr_authors, keywords_map) = tokio::join!(
+            self.get_first_authors_batch(paper_ids),
+            self.get_corr_authors_batch(paper_ids),
+            self.get_keywords_batch(paper_ids)
+        );
+
+        Ok((first_authors?, corr_authors?, keywords_map?))
+    }
+
+    async fn get_first_authors_batch(&self, paper_ids: &[String]) -> Result<std::collections::HashMap<String, Option<crate::models::author::Author>>, AppError> {
+        let query = neo4rs::query(
+            "MATCH (a:Author)-[:FIRST_AUTHOR_OF]->(p:Paper) WHERE p.id IN $paper_ids RETURN p.id AS paper_id, a"
+        )
+        .param("paper_ids", paper_ids);
+
+        let mut result = run_query!(self, query);
+        let mut authors: std::collections::HashMap<String, Option<crate::models::author::Author>> =
+            std::collections::HashMap::new();
+        while let Some(row) = result.next().await? {
+            let paper_id: String = row.get("paper_id")?;
+            let author_node: neo4rs::Node = row.get("a")?;
+            authors.insert(paper_id, Some(author_from_node(&author_node)));
+        }
+        Ok(authors)
+    }
+
+    async fn get_corr_authors_batch(&self, paper_ids: &[String]) -> Result<std::collections::HashMap<String, Option<crate::models::author::Author>>, AppError> {
+        let query = neo4rs::query(
+            "MATCH (a:Author)-[:CORRESPONDING_AUTHOR_OF]->(p:Paper) WHERE p.id IN $paper_ids RETURN p.id AS paper_id, a"
+        )
+        .param("paper_ids", paper_ids);
+
+        let mut result = run_query!(self, query);
+        let mut authors: std::collections::HashMap<String, Option<crate::models::author::Author>> =
+            std::collections::HashMap::new();
+        while let Some(row) = result.next().await? {
+            let paper_id: String = row.get("paper_id")?;
+            let author_node: neo4rs::Node = row.get("a")?;
+            authors.insert(paper_id, Some(author_from_node(&author_node)));
+        }
+        Ok(authors)
+    }
+
+    async fn get_keywords_batch(&self, paper_ids: &[String]) -> Result<std::collections::HashMap<String, Vec<crate::models::keyword::Keyword>>, AppError> {
+        let query = neo4rs::query(
+            "MATCH (p:Paper)-[:HAS_KEYWORD]->(k:Keyword) WHERE p.id IN $paper_ids RETURN p.id AS paper_id, collect(k) AS keywords"
+        )
+        .param("paper_ids", paper_ids);
+
+        let mut result = run_query!(self, query);
+        let mut keywords_map: std::collections::HashMap<String, Vec<crate::models::keyword::Keyword>> =
+            std::collections::HashMap::new();
+        while let Some(row) = result.next().await? {
+            let paper_id: String = row.get("paper_id")?;
+            let kw_nodes: Vec<neo4rs::Node> = row.get("keywords")?;
+            let keywords: Vec<crate::models::keyword::Keyword> =
+                kw_nodes.iter().map(keyword_from_node).collect();
+            keywords_map.insert(paper_id, keywords);
+        }
+        Ok(keywords_map)
+    }
 }
 
 fn workspace_from_node(node: &neo4rs::Node) -> Workspace {
