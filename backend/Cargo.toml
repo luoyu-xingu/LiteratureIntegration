@@ -25,3 +25,4 @@ tower = "0.4"
 hyper = "1"
 http-body-util = "0.1"
 mime = "0.3"
+criterion = { version = "0.5", features = ["async_tokio"] }
