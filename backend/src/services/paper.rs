@@ -31,37 +31,23 @@ impl PaperService {
         let added_at = chrono::Utc::now().to_rfc3339();
         repo.add_paper_to_workspace(workspace_id, &paper.id, &added_at).await?;
 
-        let mut first_author = None;
-        let mut corresponding_author = None;
+        let authors: Vec<(String, String, Option<String>, bool, bool)> = meta.authors.iter()
+            .map(|a| (
+                uuid::Uuid::new_v4().to_string(),
+                a.name.clone(),
+                a.orcid.clone(),
+                a.is_first,
+                a.is_corresponding,
+            ))
+            .collect();
 
-        for author_meta in &meta.authors {
-            let author_id = uuid::Uuid::new_v4().to_string();
-            let author = repo.create_author_if_not_exists(
-                &author_id,
-                &author_meta.name,
-                author_meta.orcid.as_deref(),
-            ).await?;
+        let (first_author, corresponding_author) = repo.create_authors_batch(&authors, &paper.id, workspace_id).await?;
 
-            if author_meta.is_first {
-                repo.link_first_author(&author.id, &paper.id).await?;
-                first_author = Some(author.clone());
-            }
-            if author_meta.is_corresponding {
-                repo.link_corresponding_author(&author.id, &paper.id).await?;
-                corresponding_author = Some(author.clone());
-            }
-        }
+        let keywords: Vec<(String, String)> = meta.keywords.iter()
+            .map(|k| (uuid::Uuid::new_v4().to_string(), k.clone()))
+            .collect();
 
-        if let (Some(ref fa), Some(ref ca)) = (&first_author, &corresponding_author) {
-            if fa.id != ca.id {
-                repo.link_co_authors(&fa.id, &ca.id, workspace_id).await?;
-            }
-        }
-
-        for keyword_name in &meta.keywords {
-            let keyword_id = uuid::Uuid::new_v4().to_string();
-            repo.add_keyword(&keyword_id, keyword_name, &paper.id).await?;
-        }
+        repo.add_keywords_batch(&keywords, &paper.id).await?;
 
         let keywords = repo.get_paper_keywords(&paper.id).await?;
 
@@ -78,11 +64,8 @@ impl PaperService {
     }
 
     pub async fn get_detail(repo: &Neo4jRepo, id: &str) -> Result<PaperDetailResponse, AppError> {
-        let paper = repo.get_paper(id).await?
+        let (paper, first_author, corresponding_author, keywords) = repo.get_paper_detail(id).await?
             .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
-        let first_author = repo.get_paper_first_author(id).await?;
-        let corresponding_author = repo.get_paper_corresponding_author(id).await?;
-        let keywords = repo.get_paper_keywords(id).await?;
         Ok(PaperDetailResponse {
             paper,
             first_author,
