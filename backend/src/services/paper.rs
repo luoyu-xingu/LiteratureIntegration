@@ -49,13 +49,15 @@ impl PaperService {
 
         repo.add_keywords_batch(&keywords, &paper.id).await?;
 
-        let keywords = repo.get_paper_keywords(&paper.id).await?;
+        let keyword_models: Vec<crate::models::keyword::Keyword> = keywords.into_iter()
+            .map(|(id, name)| crate::models::keyword::Keyword { id, name })
+            .collect();
 
         Ok(PaperDetailResponse {
             paper,
             first_author,
             corresponding_author,
-            keywords,
+            keywords: keyword_models,
         })
     }
 
