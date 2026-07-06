@@ -1,5 +1,6 @@
 use literature_integration::config;
 use literature_integration::routes;
+use literature_integration::repositories::neo4j_repo::Neo4jRepo;
 use axum::{routing::{get, post, delete}, Router};
 use neo4rs::Graph;
 use tower_http::cors::CorsLayer;
@@ -29,6 +30,11 @@ async fn main() {
     let graph = config::create_neo4j_pool(&cfg)
         .await
         .expect("Failed to connect to Neo4j");
+
+    let repo = Neo4jRepo::new(graph.clone());
+    if let Err(e) = repo.create_indexes().await {
+        tracing::warn!("Failed to create indexes: {}", e);
+    }
 
     tokio::spawn(keepalive(graph.clone()));
 
