@@ -11,6 +11,13 @@ pub struct Neo4jRepo {
     graph: Graph,
 }
 
+// 预分配的默认容量常量
+const DEFAULT_PAPERS_CAPACITY: usize = 32;
+const DEFAULT_AUTHORS_CAPACITY: usize = 16;
+const DEFAULT_KEYWORDS_CAPACITY: usize = 8;
+const DEFAULT_GRAPH_NODES_CAPACITY: usize = 64;
+const DEFAULT_GRAPH_LINKS_CAPACITY: usize = 128;
+
 macro_rules! run_query {
     ($self:expr, $query:expr) => {{
         let mut attempts = 0u32;
@@ -76,7 +83,7 @@ impl Neo4jRepo {
     pub async fn list_workspaces(&self) -> Result<Vec<Workspace>, AppError> {
         let query = neo4rs::query("MATCH (w:Workspace) RETURN w ORDER BY w.created_at DESC");
         let mut result = run_query!(self, query);
-        let mut workspaces = Vec::new();
+        let mut workspaces = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("w")?;
             workspaces.push(workspace_from_node(&node));
@@ -349,7 +356,7 @@ impl Neo4jRepo {
         .param("workspace_id", workspace_id);
 
         let mut result = run_query!(self, query);
-        let mut papers = Vec::new();
+        let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
@@ -437,7 +444,7 @@ impl Neo4jRepo {
         .param("paper_id", paper_id);
 
         let mut result = run_query!(self, query);
-        let mut keywords = Vec::new();
+        let mut keywords = Vec::with_capacity(DEFAULT_KEYWORDS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("k")?;
             keywords.push(keyword_from_node(&node));
@@ -487,7 +494,7 @@ impl Neo4jRepo {
         .param("workspace_id", workspace_id);
 
         let mut result = run_query!(self, query);
-        let mut authors = Vec::new();
+        let mut authors = Vec::with_capacity(DEFAULT_AUTHORS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("a")?;
             authors.push(author_from_node(&node));
@@ -502,7 +509,7 @@ impl Neo4jRepo {
         .param("author_id", author_id);
 
         let mut result = run_query!(self, query);
-        let mut papers = Vec::new();
+        let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
@@ -561,7 +568,7 @@ impl Neo4jRepo {
             .param("query", query_str);
 
         let mut result = run_query!(self, query);
-        let mut papers = Vec::new();
+        let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
@@ -579,7 +586,7 @@ impl Neo4jRepo {
             .param("author_name", author_name);
 
         let mut result = run_query!(self, query);
-        let mut authors_with_papers = Vec::new();
+        let mut authors_with_papers = Vec::with_capacity(DEFAULT_AUTHORS_CAPACITY);
         while let Some(row) = result.next().await? {
             let author_node: neo4rs::Node = row.get("a")?;
             let paper_nodes: Vec<neo4rs::Node> = row.get("papers")?;
@@ -621,7 +628,7 @@ impl Neo4jRepo {
         }
 
         let mut result = run_query!(self, query);
-        let mut papers = Vec::new();
+        let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
