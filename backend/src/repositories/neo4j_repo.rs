@@ -593,12 +593,9 @@ impl Neo4jRepo {
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
-                      RETURN p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name CONTAINS $query
-                      RETURN p
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query OR (k.name CONTAINS $query)
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
@@ -640,31 +637,35 @@ impl Neo4jRepo {
     }
 
     pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, _year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        let mut cypher = String::from(
-            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)"
-        );
+        let has_authors = author_ids.map_or(false, |ids| !ids.is_empty());
+        let has_keywords = keyword_ids.map_or(false, |ids| !ids.is_empty());
 
-        if let Some(aids) = author_ids {
-            if !aids.is_empty() {
-                cypher.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p) WHERE a.id IN $author_ids");
-            }
-        }
-        if let Some(kids) = keyword_ids {
-            if !kids.is_empty() {
-                cypher.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE k.id IN $keyword_ids");
-            }
-        }
+        let cypher = match (has_authors, has_keywords) {
+            (true, true) => "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                            MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
+                            MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                            WHERE a.id IN $author_ids AND k.id IN $keyword_ids
+                            RETURN DISTINCT p ORDER BY p.year DESC",
+            (true, false) => "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                            MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
+                            WHERE a.id IN $author_ids
+                            RETURN DISTINCT p ORDER BY p.year DESC",
+            (false, true) => "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                            MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                            WHERE k.id IN $keyword_ids
+                            RETURN DISTINCT p ORDER BY p.year DESC",
+            (false, false) => "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                            RETURN p ORDER BY p.year DESC",
+        };
 
-        cypher.push_str(" RETURN DISTINCT p ORDER BY p.year DESC");
-
-        let mut query = neo4rs::query(&cypher)
+        let mut query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id);
 
-        if let Some(aids) = author_ids {
-            query = query.param("author_ids", aids);
+        if has_authors {
+            query = query.param("author_ids", author_ids.unwrap());
         }
-        if let Some(kids) = keyword_ids {
-            query = query.param("keyword_ids", kids);
+        if has_keywords {
+            query = query.param("keyword_ids", keyword_ids.unwrap());
         }
 
         let mut result = run_query!(self, query);
