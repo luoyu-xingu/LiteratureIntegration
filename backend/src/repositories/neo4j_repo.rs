@@ -12,18 +12,19 @@ pub struct Neo4jRepo {
     graph: Graph,
 }
 
-const DEFAULT_PAPERS_CAPACITY: usize = 32;
-const DEFAULT_AUTHORS_CAPACITY: usize = 16;
-const DEFAULT_KEYWORDS_CAPACITY: usize = 8;
-const DEFAULT_WORKSPACES_CAPACITY: usize = 16;
-const DEFAULT_GRAPH_NODES_CAPACITY: usize = 64;
-const DEFAULT_GRAPH_LINKS_CAPACITY: usize = 128;
+const DEFAULT_PAPERS_CAPACITY: usize = 64;
+const DEFAULT_AUTHORS_CAPACITY: usize = 32;
+const DEFAULT_KEYWORDS_CAPACITY: usize = 16;
+const DEFAULT_WORKSPACES_CAPACITY: usize = 32;
+const DEFAULT_GRAPH_NODES_CAPACITY: usize = 128;
+const DEFAULT_GRAPH_LINKS_CAPACITY: usize = 256;
 
 macro_rules! run_query {
     ($self:expr, $query:expr) => {{
+        let query = $query;
         let mut attempts = 0u32;
         loop {
-            match $self.graph.execute($query.clone()).await {
+            match $self.graph.execute(query.clone()).await {
                 Ok(stream) => break stream,
                 Err(e) if is_session_token_error(&e) && attempts < 3 => {
                     attempts += 1;
@@ -267,13 +268,21 @@ impl Neo4jRepo {
         let mut orcids = Vec::with_capacity(n);
         let mut is_first = Vec::with_capacity(n);
         let mut is_corresponding = Vec::with_capacity(n);
+        let mut first_idx: Option<usize> = None;
+        let mut corresponding_idx: Option<usize> = None;
 
-        for a in authors {
-            ids.push(a.0.clone());
-            names.push(a.1.clone());
-            orcids.push(a.2.as_deref().unwrap_or("").to_string());
+        for (i, a) in authors.iter().enumerate() {
+            ids.push(a.0.as_str());
+            names.push(a.1.as_str());
+            orcids.push(a.2.as_deref().unwrap_or(""));
             is_first.push(a.3);
             is_corresponding.push(a.4);
+            if a.3 && first_idx.is_none() {
+                first_idx = Some(i);
+            }
+            if a.4 && corresponding_idx.is_none() {
+                corresponding_idx = Some(i);
+            }
         }
 
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
@@ -301,11 +310,11 @@ impl Neo4jRepo {
                       RETURN first_author, corresponding_author";
 
         let query = neo4rs::query(cypher)
-            .param("ids", ids)
-            .param("names", names)
-            .param("orcids", orcids)
-            .param("is_first", is_first)
-            .param("is_corresponding", is_corresponding)
+            .param("ids", ids.as_slice())
+            .param("names", names.as_slice())
+            .param("orcids", orcids.as_slice())
+            .param("is_first", is_first.as_slice())
+            .param("is_corresponding", is_corresponding.as_slice())
             .param("paper_id", paper_id)
             .param("workspace_id", workspace_id);
 
@@ -315,33 +324,39 @@ impl Neo4jRepo {
             let first_author_val: Option<Value> = row.get("first_author").ok();
             let corresponding_author_val: Option<Value> = row.get("corresponding_author").ok();
 
-            let first_author = first_author_val.and_then(|v| {
-                let obj = v.as_object()?;
-                Some(crate::models::author::Author {
-                    id: obj.get("id")?.as_str()?.to_string(),
-                    name: obj.get("name")?.as_str()?.to_string(),
-                    orcid: {
-                        let orcid = obj.get("orcid")?.as_str()?.to_string();
-                        if orcid.is_empty() { None } else { Some(orcid) }
-                    },
+            let parse_author = |v: Option<Value>| {
+                v.and_then(|val| {
+                    let obj = val.as_object()?;
+                    Some(crate::models::author::Author {
+                        id: obj.get("id")?.as_str()?.to_string(),
+                        name: obj.get("name")?.as_str()?.to_string(),
+                        orcid: {
+                            let orcid = obj.get("orcid")?.as_str()?.to_string();
+                            if orcid.is_empty() { None } else { Some(orcid) }
+                        },
+                    })
                 })
-            });
+            };
 
-            let corresponding_author = corresponding_author_val.and_then(|v| {
-                let obj = v.as_object()?;
-                Some(crate::models::author::Author {
-                    id: obj.get("id")?.as_str()?.to_string(),
-                    name: obj.get("name")?.as_str()?.to_string(),
-                    orcid: {
-                        let orcid = obj.get("orcid")?.as_str()?.to_string();
-                        if orcid.is_empty() { None } else { Some(orcid) }
-                    },
-                })
-            });
-
-            Ok((first_author, corresponding_author))
+            Ok((parse_author(first_author_val), parse_author(corresponding_author_val)))
         } else {
-            Ok((None, None))
+            let first_author = first_idx.map(|i| {
+                let a = &authors[i];
+                crate::models::author::Author {
+                    id: a.0.clone(),
+                    name: a.1.clone(),
+                    orcid: a.2.clone(),
+                }
+            });
+            let corresponding_author = corresponding_idx.map(|i| {
+                let a = &authors[i];
+                crate::models::author::Author {
+                    id: a.0.clone(),
+                    name: a.1.clone(),
+                    orcid: a.2.clone(),
+                }
+            });
+            Ok((first_author, corresponding_author))
         }
     }
 
@@ -351,8 +366,8 @@ impl Neo4jRepo {
         let mut names = Vec::with_capacity(n);
 
         for k in keywords {
-            ids.push(k.0.clone());
-            names.push(k.1.clone());
+            ids.push(k.0.as_str());
+            names.push(k.1.as_str());
         }
 
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
@@ -363,8 +378,8 @@ impl Neo4jRepo {
                       MERGE (p)-[:HAS_KEYWORD]->(k)";
 
         let query = neo4rs::query(cypher)
-            .param("ids", ids)
-            .param("names", names)
+            .param("ids", ids.as_slice())
+            .param("names", names.as_slice())
             .param("paper_id", paper_id);
 
         let mut result = run_query!(self, query);
@@ -562,27 +577,23 @@ impl Neo4jRepo {
             let nodes_data: Vec<Value> = row.get("nodes_data").unwrap_or_default();
             let links_data: Vec<Value> = row.get("links_data").unwrap_or_default();
 
-            let mut nodes = Vec::with_capacity(nodes_data.len());
-            for node_val in &nodes_data {
-                if let Some(node_obj) = node_val.as_object() {
-                    nodes.push(crate::models::dto::GraphNode {
-                        id: node_obj.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                        name: node_obj.get("name").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                        paper_count: node_obj.get("paper_count").and_then(|v| v.as_i64()).unwrap_or(0) as i32,
-                        author_type: node_obj.get("author_type").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                    });
-                }
+            let mut nodes = Vec::with_capacity(nodes_data.len().max(DEFAULT_GRAPH_NODES_CAPACITY));
+            for node_val in nodes_data.iter() {
+                let Some(node_obj) = node_val.as_object() else { continue };
+                let id = node_obj.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                let name = node_obj.get("name").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                let paper_count = node_obj.get("paper_count").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                let author_type = node_obj.get("author_type").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                nodes.push(crate::models::dto::GraphNode { id, name, paper_count, author_type });
             }
 
-            let mut links = Vec::with_capacity(links_data.len());
-            for link_val in &links_data {
-                if let Some(link_obj) = link_val.as_object() {
-                    links.push(crate::models::dto::GraphLink {
-                        source: link_obj.get("source").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                        target: link_obj.get("target").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                        paper_count: link_obj.get("paper_count").and_then(|v| v.as_i64()).unwrap_or(0) as i32,
-                    });
-                }
+            let mut links = Vec::with_capacity(links_data.len().max(DEFAULT_GRAPH_LINKS_CAPACITY));
+            for link_val in links_data.iter() {
+                let Some(link_obj) = link_val.as_object() else { continue };
+                let source = link_obj.get("source").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                let target = link_obj.get("target").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                let paper_count = link_obj.get("paper_count").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                links.push(crate::models::dto::GraphLink { source, target, paper_count });
             }
 
             Ok((nodes, links))
@@ -593,12 +604,8 @@ impl Neo4jRepo {
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
-                      RETURN p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name CONTAINS $query
-                      RETURN p
+                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query OR (p)-[:HAS_KEYWORD]->(:Keyword {name: $query})
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
