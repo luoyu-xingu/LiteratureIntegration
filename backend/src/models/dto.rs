@@ -31,13 +31,13 @@ pub struct PaperDetailResponse {
     pub keywords: Vec<super::keyword::Keyword>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GraphDataResponse {
     pub nodes: Vec<GraphNode>,
     pub links: Vec<GraphLink>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GraphNode {
     pub id: String,
     pub name: String,
@@ -45,7 +45,7 @@ pub struct GraphNode {
     pub author_type: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GraphLink {
     pub source: String,
     pub target: String,
@@ -66,7 +66,7 @@ pub struct ExportFilter {
     pub year_range: Option<(i32, i32)>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AuthorWithPapers {
     pub author: super::author::Author,
     pub papers: Vec<super::paper::Paper>,
