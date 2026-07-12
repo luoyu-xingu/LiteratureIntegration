@@ -11,37 +11,54 @@ impl ExportService {
         let keyword_ids = filter.keyword_ids.as_deref();
         let year_range = filter.year_range;
 
-        let papers = repo.get_papers_for_export(workspace_id, author_ids, keyword_ids, year_range).await?;
+        let papers_detail = repo.get_papers_detail_batch(workspace_id, author_ids, keyword_ids, year_range).await?;
 
         let workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
 
-        let mut md = format!("# 工作区: {}\n\n", workspace.name);
-        md.push_str(&format!("> 导出时间: {}\n", chrono::Utc::now().format("%Y-%m-%d %H:%M")));
-        md.push_str(&format!("> 论文数量: {}\n\n---\n\n", papers.len()));
+        let estimated_size = papers_detail.len() * 500 + 200;
+        let mut md = String::with_capacity(estimated_size);
 
-        for paper in &papers {
-            md.push_str(&format!("### {}\n", paper.title));
-            md.push_str(&format!("- **年份**: {} | **期刊**: {}\n", paper.year.map(|y| y.to_string()).unwrap_or_default(), paper.journal.as_deref().unwrap_or("")));
-            md.push_str(&format!("- **DOI**: {}\n", paper.doi.as_deref().unwrap_or("")));
+        md.push_str("# 工作区: ");
+        md.push_str(&workspace.name);
+        md.push_str("\n\n> 导出时间: ");
+        md.push_str(&chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string());
+        md.push_str("\n> 论文数量: ");
+        md.push_str(&papers_detail.len().to_string());
+        md.push_str("\n\n---\n\n");
 
-            let first_author = repo.get_paper_first_author(&paper.id).await?;
-            let corr_author = repo.get_paper_corresponding_author(&paper.id).await?;
-            md.push_str(&format!("- **一作**: {} | **通讯**: {}\n",
-                first_author.map(|a| a.name).unwrap_or_default(),
-                corr_author.map(|a| a.name).unwrap_or_default()
-            ));
-
-            let keywords = repo.get_paper_keywords(&paper.id).await?;
-            let kw_str: Vec<String> = keywords.iter().map(|k| k.name.clone()).collect();
-            md.push_str(&format!("- **关键词**: {}\n\n", kw_str.join(", ")));
+        for (paper, first_author, corr_author, keywords) in &papers_detail {
+            md.push_str("### ");
+            md.push_str(&paper.title);
+            md.push_str("\n- **年份**: ");
+            md.push_str(&paper.year.map(|y| y.to_string()).unwrap_or_default());
+            md.push_str(" | **期刊**: ");
+            md.push_str(paper.journal.as_deref().unwrap_or(""));
+            md.push_str("\n- **DOI**: ");
+            md.push_str(paper.doi.as_deref().unwrap_or(""));
+            md.push_str("\n- **一作**: ");
+            md.push_str(first_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
+            md.push_str(" | **通讯**: ");
+            md.push_str(corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
+            md.push_str("\n- **关键词**: ");
+            for (i, kw) in keywords.iter().enumerate() {
+                if i > 0 {
+                    md.push_str(", ");
+                }
+                md.push_str(&kw.name);
+            }
+            md.push_str("\n\n");
 
             if let Some(ref abstract_text) = paper.abstract_text {
-                md.push_str(&format!("**Abstract:**\n{}\n\n", abstract_text));
+                md.push_str("**Abstract:**\n");
+                md.push_str(abstract_text);
+                md.push_str("\n\n");
             }
             if let Some(ref notes) = paper.user_notes {
                 if !notes.is_empty() {
-                    md.push_str(&format!("**笔记:**\n{}\n\n", notes));
+                    md.push_str("**笔记:**\n");
+                    md.push_str(notes);
+                    md.push_str("\n\n");
                 }
             }
 

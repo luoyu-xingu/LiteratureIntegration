@@ -56,7 +56,10 @@ pub struct ExternalApiClient {
 impl ExternalApiClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .pool_idle_timeout(std::time::Duration::from_secs(30))
+                .build()
+                .unwrap_or_else(|_| reqwest::Client::new()),
         }
     }
 
@@ -112,20 +115,20 @@ impl ExternalApiClient {
             .and_then(|d| d.date_parts.into_iter().next())
             .and_then(|p| p.into_iter().next());
 
-        let mut authors: Vec<AuthorMeta> = Vec::new();
+        let mut authors: Vec<AuthorMeta> = Vec::with_capacity(work.author.as_ref().map(|a| a.len()).unwrap_or(0));
         if let Some(crossref_authors) = work.author {
             let total = crossref_authors.len();
-            for (i, a) in crossref_authors.iter().enumerate() {
-                let given = a.given.as_deref().unwrap_or("");
-                let family = a.family.as_deref().unwrap_or("");
+            for (i, a) in crossref_authors.into_iter().enumerate() {
+                let given = a.given.unwrap_or_default();
+                let family = a.family.unwrap_or_default();
                 let name = if given.is_empty() {
-                    family.to_string()
+                    family
                 } else {
                     format!("{} {}", given, family)
                 };
                 authors.push(AuthorMeta {
                     name,
-                    orcid: a.orcid.clone(),
+                    orcid: a.orcid,
                     is_first: i == 0,
                     is_corresponding: i == total - 1,
                 });
@@ -210,7 +213,7 @@ fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
 fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
     let open = format!("<{}>", tag);
     let close = format!("</{}>", tag);
-    let mut results = Vec::new();
+    let mut results = Vec::with_capacity(8);
     let mut search_from = 0;
     while let Some(start) = xml[search_from..].find(&open) {
         let content_start = search_from + start + open.len();
@@ -225,5 +228,6 @@ fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
             break;
         }
     }
+    results.shrink_to_fit();
     results
 }

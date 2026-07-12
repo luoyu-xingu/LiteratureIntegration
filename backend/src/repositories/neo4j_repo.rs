@@ -561,8 +561,11 @@ impl Neo4jRepo {
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
                       WITH w, a, count(DISTINCT p) AS paper_count,
-                           CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) AND EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper))
-                                THEN 'both' WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) THEN 'first' ELSE 'corresponding' END AS author_type
+                           CASE
+                               WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) AND EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper)) THEN 'both'
+                               WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(:Paper)) THEN 'first'
+                               ELSE 'corresponding'
+                           END AS author_type
                       WITH w, collect({id: a.id, name: a.name, paper_count: paper_count, author_type: author_type}) AS nodes_data
                       OPTIONAL MATCH (w)-[:CONTAINS]->(:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
                       WHERE a1.id < a2.id
@@ -604,7 +607,9 @@ impl Neo4jRepo {
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query OR (p)-[:HAS_KEYWORD]->(:Keyword {name: $query})
+                      WHERE p.title CONTAINS $query
+                         OR p.abstract CONTAINS $query
+                         OR EXISTS((p)-[:HAS_KEYWORD]->(:Keyword {name: $query}))
                       RETURN DISTINCT p
                       ORDER BY p.year DESC";
         let query = neo4rs::query(cypher)
@@ -681,6 +686,75 @@ impl Neo4jRepo {
             papers.push(paper_from_node(&node));
         }
         Ok(papers)
+    }
+
+    pub async fn get_papers_detail_batch(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, year_range: Option<(i32, i32)>) -> Result<Vec<(
+        crate::models::paper::Paper,
+        Option<crate::models::author::Author>,
+        Option<crate::models::author::Author>,
+        Vec<crate::models::keyword::Keyword>,
+    )>, AppError> {
+        let mut cypher = String::from(
+            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)"
+        );
+
+        if let Some(aids) = author_ids {
+            if !aids.is_empty() {
+                cypher.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p) WHERE a.id IN $author_ids");
+            }
+        }
+        if let Some(kids) = keyword_ids {
+            if !kids.is_empty() {
+                cypher.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE k.id IN $keyword_ids");
+            }
+        }
+        if let Some((start_year, end_year)) = year_range {
+            cypher.push_str(" WHERE p.year >= $start_year AND p.year <= $end_year");
+        }
+
+        cypher.push_str(
+            " WITH DISTINCT p
+              OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
+              WITH p, fa
+              OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
+              WITH p, fa, ca
+              OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+              WITH p, collect(DISTINCT fa)[0] AS fa, collect(DISTINCT ca)[0] AS ca, collect(k) AS keywords
+              RETURN p, fa, ca, keywords
+              ORDER BY p.year DESC"
+        );
+
+        let mut query = neo4rs::query(&cypher)
+            .param("workspace_id", workspace_id);
+
+        if let Some(aids) = author_ids {
+            query = query.param("author_ids", aids);
+        }
+        if let Some(kids) = keyword_ids {
+            query = query.param("keyword_ids", kids);
+        }
+        if let Some((start_year, end_year)) = year_range {
+            query = query.param("start_year", start_year).param("end_year", end_year);
+        }
+
+        let mut result = run_query!(self, query);
+        let mut papers_detail = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
+        while let Some(row) = result.next().await? {
+            let paper_node: neo4rs::Node = row.get("p")?;
+            let first_author: Option<neo4rs::Node> = row.get("fa").ok();
+            let corresponding_author: Option<neo4rs::Node> = row.get("ca").ok();
+            let keyword_nodes: Vec<neo4rs::Node> = row.get("keywords").unwrap_or_default();
+
+            let first_author = first_author.map(|n| author_from_node(&n));
+            let corresponding_author = corresponding_author.map(|n| author_from_node(&n));
+            let mut keywords = Vec::with_capacity(keyword_nodes.len());
+            for n in &keyword_nodes {
+                keywords.push(keyword_from_node(n));
+            }
+
+            papers_detail.push((paper_from_node(&paper_node), first_author, corresponding_author, keywords));
+        }
+        Ok(papers_detail)
     }
 }
 
