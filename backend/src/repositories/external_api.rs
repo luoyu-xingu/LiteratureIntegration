@@ -211,23 +211,26 @@ fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
 }
 
 fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let mut results = Vec::with_capacity(8);
+    // 预估容量：统计开标签出现次数
+    let open_tag = format!("<{}>", tag);
+    let close_tag = format!("</{}>", tag);
+    let estimated_count = xml.matches(&open_tag as &str).count();
+    let mut results = Vec::with_capacity(estimated_count);
     let mut search_from = 0;
-    while let Some(start) = xml[search_from..].find(&open) {
-        let content_start = search_from + start + open.len();
-        if let Some(content_end) = xml[content_start..].find(&close) {
+    let open_len = open_tag.len();
+    let close_len = close_tag.len();
+    while let Some(start) = xml[search_from..].find(&open_tag) {
+        let content_start = search_from + start + open_len;
+        if let Some(content_end) = xml[content_start..].find(&close_tag as &str) {
             results.push(
                 xml[content_start..content_start + content_end]
                     .trim()
                     .to_string(),
             );
-            search_from = content_start + content_end + close.len();
+            search_from = content_start + content_end + close_len;
         } else {
             break;
         }
     }
-    results.shrink_to_fit();
     results
 }

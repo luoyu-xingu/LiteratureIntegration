@@ -31,25 +31,33 @@ impl PaperService {
         let added_at = chrono::Utc::now().to_rfc3339();
         repo.add_paper_to_workspace(workspace_id, &paper.id, &added_at).await?;
 
-        let authors: Vec<(String, String, Option<String>, bool, bool)> = meta.authors.iter()
-            .map(|a| (
+        // 预分配容量，避免多次重新分配
+        let authors_count = meta.authors.len();
+        let keywords_count = meta.keywords.len();
+        
+        let mut authors: Vec<(String, String, Option<String>, bool, bool)> = Vec::with_capacity(authors_count);
+        for a in &meta.authors {
+            authors.push((
                 uuid::Uuid::new_v4().to_string(),
                 a.name.clone(),
                 a.orcid.clone(),
                 a.is_first,
                 a.is_corresponding,
-            ))
-            .collect();
+            ));
+        }
 
         let (first_author, corresponding_author) = repo.create_authors_batch(&authors, &paper.id, workspace_id).await?;
 
-        let keywords: Vec<(String, String)> = meta.keywords.iter()
-            .map(|k| (uuid::Uuid::new_v4().to_string(), k.clone()))
-            .collect();
+        let mut keywords: Vec<(String, String)> = Vec::with_capacity(keywords_count);
+        for k in &meta.keywords {
+            keywords.push((uuid::Uuid::new_v4().to_string(), k.clone()));
+        }
 
         repo.add_keywords_batch(&keywords, &paper.id).await?;
 
-        let keyword_models: Vec<crate::models::keyword::Keyword> = keywords.into_iter()
+        // 使用已分配的 keywords，避免额外的迭代
+        let keyword_models: Vec<crate::models::keyword::Keyword> = keywords
+            .into_iter()
             .map(|(id, name)| crate::models::keyword::Keyword { id, name })
             .collect();
 

@@ -587,13 +587,15 @@ impl Neo4jRepo {
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
+        // 使用单次查询，避免 UNION 操作符的性能开销
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE k.name = $query
+                      WITH p, k
                       WHERE p.title CONTAINS $query
                          OR p.abstract CONTAINS $query
-                      RETURN p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword {name: $query})
-                      RETURN p
+                         OR k IS NOT NULL
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
