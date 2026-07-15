@@ -268,20 +268,20 @@ impl Neo4jRepo {
         let mut orcids = Vec::with_capacity(n);
         let mut is_first = Vec::with_capacity(n);
         let mut is_corresponding = Vec::with_capacity(n);
-        let mut first_idx: Option<usize> = None;
-        let mut corresponding_idx: Option<usize> = None;
+        let mut first_id = String::new();
+        let mut corresponding_id = String::new();
 
-        for (i, a) in authors.iter().enumerate() {
+        for a in authors {
             ids.push(a.0.as_str());
             names.push(a.1.as_str());
             orcids.push(a.2.as_deref().unwrap_or(""));
             is_first.push(a.3);
             is_corresponding.push(a.4);
-            if a.3 && first_idx.is_none() {
-                first_idx = Some(i);
+            if a.3 && first_id.is_empty() {
+                first_id = a.0.clone();
             }
-            if a.4 && corresponding_idx.is_none() {
-                corresponding_idx = Some(i);
+            if a.4 && corresponding_id.is_empty() {
+                corresponding_id = a.0.clone();
             }
         }
 
@@ -325,19 +325,17 @@ impl Neo4jRepo {
             }
         }
 
-        if let (Some(fa), Some(ca)) = (&first_author, &corresponding_author) {
-            if fa.id != ca.id {
-                let co_auth_cypher = "MATCH (a1:Author {id: $a1_id}), (a2:Author {id: $a2_id})
-                                     MERGE (a1)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2)
-                                     ON CREATE SET r.paper_count = 1
-                                     ON MATCH SET r.paper_count = r.paper_count + 1";
-                let co_auth_query = neo4rs::query(co_auth_cypher)
-                    .param("a1_id", &*fa.id)
-                    .param("a2_id", &*ca.id)
-                    .param("workspace_id", workspace_id);
-                let mut co_auth_result = run_query!(self, co_auth_query);
-                let _ = co_auth_result.next().await;
-            }
+        if !first_id.is_empty() && !corresponding_id.is_empty() && first_id != corresponding_id {
+            let co_auth_cypher = "MATCH (a1:Author {id: $a1_id}), (a2:Author {id: $a2_id})
+                                 MERGE (a1)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2)
+                                 ON CREATE SET r.paper_count = 1
+                                 ON MATCH SET r.paper_count = r.paper_count + 1";
+            let co_auth_query = neo4rs::query(co_auth_cypher)
+                .param("a1_id", &*first_id)
+                .param("a2_id", &*corresponding_id)
+                .param("workspace_id", workspace_id);
+            let mut co_auth_result = run_query!(self, co_auth_query);
+            let _ = co_auth_result.next().await;
         }
 
         Ok((first_author, corresponding_author))
@@ -540,61 +538,58 @@ impl Neo4jRepo {
     }
 
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
-        let nodes_cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
-                           WITH a, count(DISTINCT p) AS paper_count,
-                                sum(CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(p)) THEN 1 ELSE 0 END) > 0 AS has_first,
-                                sum(CASE WHEN EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(p)) THEN 1 ELSE 0 END) > 0 AS has_corresponding
-                           RETURN a.id AS id, a.name AS name, paper_count,
-                                  CASE WHEN has_first AND has_corresponding THEN 'both' WHEN has_first THEN 'first' ELSE 'corresponding' END AS author_type";
+        let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
+                      WITH a, count(DISTINCT p) AS paper_count,
+                           sum(CASE WHEN EXISTS((a)-[:FIRST_AUTHOR_OF]->(p)) THEN 1 ELSE 0 END) > 0 AS has_first,
+                           sum(CASE WHEN EXISTS((a)-[:CORRESPONDING_AUTHOR_OF]->(p)) THEN 1 ELSE 0 END) > 0 AS has_corresponding,
+                           collect(DISTINCT a) AS authors
+                      WITH collect({id: a.id, name: a.name, paper_count: paper_count, 
+                                    author_type: CASE WHEN has_first AND has_corresponding THEN 'both' WHEN has_first THEN 'first' ELSE 'corresponding' END}) AS nodes,
+                           authors
+                      UNWIND authors AS a1
+                      UNWIND authors AS a2
+                      MATCH (a1)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2)
+                      WHERE a1.id < a2.id
+                      WITH nodes, collect(DISTINCT {source: a1.id, target: a2.id, paper_count: r.paper_count}) AS links
+                      RETURN nodes, links";
 
-        let nodes_query = neo4rs::query(nodes_cypher).param("workspace_id", workspace_id);
-        let mut nodes_result = run_query!(self, nodes_query);
-        let mut nodes = Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY);
+        let query = neo4rs::query(cypher).param("workspace_id", workspace_id);
+        let mut result = run_query!(self, query);
         
-        while let Some(row) = nodes_result.next().await? {
-            let id: String = row.get("id")?;
-            let name: String = row.get("name")?;
-            let paper_count: i64 = row.get("paper_count")?;
-            let author_type: String = row.get("author_type")?;
-            nodes.push(crate::models::dto::GraphNode { 
-                id, 
-                name, 
-                paper_count: paper_count as i32, 
-                author_type 
-            });
+        if let Some(row) = result.next().await? {
+            let nodes_raw: Vec<serde_json::Value> = row.get("nodes")?;
+            let links_raw: Vec<serde_json::Value> = row.get("links")?;
+            
+            let mut nodes = Vec::with_capacity(nodes_raw.len());
+            for node in nodes_raw {
+                nodes.push(crate::models::dto::GraphNode {
+                    id: node["id"].as_str().unwrap_or_default().to_string(),
+                    name: node["name"].as_str().unwrap_or_default().to_string(),
+                    paper_count: node["paper_count"].as_i64().unwrap_or(0) as i32,
+                    author_type: node["author_type"].as_str().unwrap_or_default().to_string(),
+                });
+            }
+            
+            let mut links = Vec::with_capacity(links_raw.len());
+            for link in links_raw {
+                links.push(crate::models::dto::GraphLink {
+                    source: link["source"].as_str().unwrap_or_default().to_string(),
+                    target: link["target"].as_str().unwrap_or_default().to_string(),
+                    paper_count: link["paper_count"].as_i64().unwrap_or(0) as i32,
+                });
+            }
+            
+            Ok((nodes, links))
+        } else {
+            Ok((Vec::new(), Vec::new()))
         }
-
-        let links_cypher = "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
-                           WHERE a1.id < a2.id
-                           RETURN a1.id AS source, a2.id AS target, r.paper_count AS paper_count";
-
-        let links_query = neo4rs::query(links_cypher).param("workspace_id", workspace_id);
-        let mut links_result = run_query!(self, links_query);
-        let mut links = Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY);
-        
-        while let Some(row) = links_result.next().await? {
-            let source: String = row.get("source")?;
-            let target: String = row.get("target")?;
-            let paper_count: i64 = row.get("paper_count")?;
-            links.push(crate::models::dto::GraphLink { 
-                source, 
-                target, 
-                paper_count: paper_count as i32 
-            });
-        }
-
-        Ok((nodes, links))
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        // 使用单次查询，避免 UNION 操作符的性能开销
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name = $query
-                      WITH p, k
                       WHERE p.title CONTAINS $query
                          OR p.abstract CONTAINS $query
-                         OR k IS NOT NULL
+                         OR EXISTS((p)-[:HAS_KEYWORD]->(:Keyword {name: $query}))
                       RETURN DISTINCT p
                       ORDER BY p.year DESC";
         let query = neo4rs::query(cypher)
@@ -637,9 +632,8 @@ impl Neo4jRepo {
     }
 
     pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, _year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        let mut cypher = String::from(
-            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)"
-        );
+        let mut cypher = String::with_capacity(512);
+        cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
         if let Some(aids) = author_ids {
             if !aids.is_empty() {
@@ -679,9 +673,8 @@ impl Neo4jRepo {
         Option<crate::models::author::Author>,
         Vec<crate::models::keyword::Keyword>,
     )>, AppError> {
-        let mut cypher = String::from(
-            "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)"
-        );
+        let mut cypher = String::with_capacity(1024);
+        cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
         let mut has_where = false;
 
