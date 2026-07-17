@@ -58,6 +58,10 @@ impl ExternalApiClient {
         Self {
             client: reqwest::Client::builder()
                 .pool_idle_timeout(std::time::Duration::from_secs(30))
+                .pool_max_idle_per_host(10)
+                .connect_timeout(std::time::Duration::from_secs(5))
+                .timeout(std::time::Duration::from_secs(30))
+                .tcp_keepalive(std::time::Duration::from_secs(15))
                 .build()
                 .unwrap_or_else(|_| reqwest::Client::new()),
         }
@@ -65,11 +69,13 @@ impl ExternalApiClient {
 
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
         let trimmed = identifier.trim();
-        if trimmed.starts_with("10.") || trimmed.to_lowercase().starts_with("doi:") {
-            let doi = trimmed
-                .trim_start_matches("doi:")
-                .trim_start_matches("DOI:")
-                .trim();
+        let lower = trimmed.to_ascii_lowercase();
+        if trimmed.starts_with("10.") || lower.starts_with("doi:") {
+            let doi = if lower.starts_with("doi:") {
+                trimmed[4..].trim()
+            } else {
+                trimmed
+            };
             self.fetch_by_doi(doi).await
         } else {
             self.fetch_by_arxiv(trimmed).await

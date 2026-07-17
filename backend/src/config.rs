@@ -31,8 +31,8 @@ pub async fn create_neo4j_pool(config: &Config) -> Result<Graph, neo4rs::Error> 
         .uri(&config.neo4j_uri)
         .user(&config.neo4j_user)
         .password(&config.neo4j_password)
-        .max_connections(16)
-        .fetch_size(1000)
+        .max_connections(50)
+        .fetch_size(5000)
         .build()?;
     Graph::connect(config).await
 }

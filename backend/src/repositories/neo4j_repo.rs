@@ -3,8 +3,9 @@ use crate::models::workspace::Workspace;
 use crate::errors::AppError;
 
 fn is_session_token_error(err: &neo4rs::Error) -> bool {
-    let msg = err.to_string().to_lowercase();
-    msg.contains("invalid session token") || (msg.contains("session") && msg.contains("token"))
+    let msg = err.to_string();
+    let msg_lower = msg.to_lowercase();
+    msg_lower.contains("invalid session token") || (msg_lower.contains("session") && msg_lower.contains("token"))
 }
 
 #[derive(Clone)]
@@ -556,45 +557,63 @@ impl Neo4jRepo {
                           RETURN a.id AS id, a.name AS name, paper_count,
                                  CASE WHEN has_first AND has_corresponding THEN 'both' WHEN has_first THEN 'first' ELSE 'corresponding' END AS author_type";
 
-        let node_query = neo4rs::query(node_cypher).param("workspace_id", workspace_id);
-        let mut node_result = run_query!(self, node_query);
-        
-        let mut nodes = Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY);
-        while let Some(row) = node_result.next().await? {
-            nodes.push(crate::models::dto::GraphNode {
-                id: row.get("id")?,
-                name: row.get("name")?,
-                paper_count: row.get("paper_count")?,
-                author_type: row.get("author_type")?,
-            });
-        }
-
         let link_cypher = "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
                           WHERE a1.id < a2.id
                           RETURN a1.id AS source, a2.id AS target, r.paper_count AS paper_count";
 
-        let link_query = neo4rs::query(link_cypher).param("workspace_id", workspace_id);
-        let mut link_result = run_query!(self, link_query);
-        
-        let mut links = Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY);
-        while let Some(row) = link_result.next().await? {
-            links.push(crate::models::dto::GraphLink {
-                source: row.get("source")?,
-                target: row.get("target")?,
-                paper_count: row.get("paper_count")?,
-            });
-        }
+        // Run node and link queries concurrently
+        let graph = self.graph.clone();
+        let ws_id_nodes = workspace_id.to_string();
+        let ws_id_links = workspace_id.to_string();
+
+        let nodes_handle = tokio::spawn(async move {
+            let query = neo4rs::query(node_cypher).param("workspace_id", ws_id_nodes.as_str());
+            let mut result = graph.execute(query).await?;
+            let mut nodes = Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY);
+            while let Some(row) = result.next().await? {
+                nodes.push(crate::models::dto::GraphNode {
+                    id: row.get("id")?,
+                    name: row.get("name")?,
+                    paper_count: row.get("paper_count")?,
+                    author_type: row.get("author_type")?,
+                });
+            }
+            Ok::<Vec<crate::models::dto::GraphNode>, AppError>(nodes)
+        });
+
+        let graph2 = self.graph.clone();
+        let links_handle = tokio::spawn(async move {
+            let query = neo4rs::query(link_cypher).param("workspace_id", ws_id_links.as_str());
+            let mut result = graph2.execute(query).await?;
+            let mut links = Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY);
+            while let Some(row) = result.next().await? {
+                links.push(crate::models::dto::GraphLink {
+                    source: row.get("source")?,
+                    target: row.get("target")?,
+                    paper_count: row.get("paper_count")?,
+                });
+            }
+            Ok::<Vec<crate::models::dto::GraphLink>, AppError>(links)
+        });
+
+        let nodes = nodes_handle.await.map_err(|e| AppError::Neo4jError(format!("Node task join error: {}", e)))??;
+        let links = links_handle.await.map_err(|e| AppError::Neo4jError(format!("Link task join error: {}", e)))??;
         
         Ok((nodes, links))
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
+        // Use STARTS WITH for prefix queries (index-accelerated), CONTAINS as fallback
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                      WHERE p.title STARTS WITH $query OR p.abstract STARTS WITH $query
+                      RETURN p
+                      UNION
+                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
                       RETURN p
                       UNION
                       MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name = $query
+                      WHERE k.name STARTS WITH $query OR k.name = $query
                       RETURN p
                       ORDER BY p.year DESC
                       LIMIT 100";
@@ -613,7 +632,7 @@ impl Neo4jRepo {
 
     pub async fn search_by_author(&self, workspace_id: &str, author_name: &str) -> Result<Vec<crate::models::dto::AuthorWithPapers>, AppError> {
         let cypher = "MATCH (a:Author) 
-                      WHERE a.name CONTAINS $author_name 
+                      WHERE a.name STARTS WITH $author_name OR a.name CONTAINS $author_name
                       MATCH (a)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p:Paper)<-[:CONTAINS]-(w:Workspace {id: $workspace_id}) 
                       RETURN a, collect(DISTINCT p) AS papers 
                       ORDER BY size(papers) DESC 
@@ -643,24 +662,25 @@ impl Neo4jRepo {
         let mut cypher = String::with_capacity(512);
         cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
-        let mut conditions: Vec<String> = Vec::new();
+        let mut has_conditions = false;
 
         if let Some(aids) = author_ids {
             if !aids.is_empty() {
                 cypher.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-                conditions.push("a.id IN $author_ids".to_string());
+                cypher.push_str(" WHERE a.id IN $author_ids");
+                has_conditions = true;
             }
         }
         if let Some(kids) = keyword_ids {
             if !kids.is_empty() {
                 cypher.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-                conditions.push("k.id IN $keyword_ids".to_string());
+                if has_conditions {
+                    cypher.push_str(" AND k.id IN $keyword_ids");
+                } else {
+                    cypher.push_str(" WHERE k.id IN $keyword_ids");
+                    has_conditions = true;
+                }
             }
-        }
-
-        if !conditions.is_empty() {
-            cypher.push_str(" WHERE ");
-            cypher.push_str(&conditions.join(" AND "));
         }
 
         cypher.push_str(" RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200");
@@ -693,27 +713,33 @@ impl Neo4jRepo {
         let mut cypher = String::with_capacity(1024);
         cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
-        let mut conditions: Vec<String> = Vec::new();
+        let mut has_conditions = false;
 
         if let Some(aids) = author_ids {
             if !aids.is_empty() {
                 cypher.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-                conditions.push("a.id IN $author_ids".to_string());
+                cypher.push_str(" WHERE a.id IN $author_ids");
+                has_conditions = true;
             }
         }
         if let Some(kids) = keyword_ids {
             if !kids.is_empty() {
                 cypher.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-                conditions.push("k.id IN $keyword_ids".to_string());
+                if has_conditions {
+                    cypher.push_str(" AND k.id IN $keyword_ids");
+                } else {
+                    cypher.push_str(" WHERE k.id IN $keyword_ids");
+                }
+                has_conditions = true;
             }
         }
         if let Some((start_year, end_year)) = year_range {
-            conditions.push(format!("p.year >= {} AND p.year <= {}", start_year, end_year));
-        }
-
-        if !conditions.is_empty() {
-            cypher.push_str(" WHERE ");
-            cypher.push_str(&conditions.join(" AND "));
+            use std::fmt::Write;
+            if has_conditions {
+                write!(cypher, " AND p.year >= {} AND p.year <= {}", start_year, end_year).unwrap();
+            } else {
+                write!(cypher, " WHERE p.year >= {} AND p.year <= {}", start_year, end_year).unwrap();
+            }
         }
 
         cypher.push_str(

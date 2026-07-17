@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use crate::errors::AppError;
 use crate::models::dto::ExportRequest;
 use crate::repositories::neo4j_repo::Neo4jRepo;
@@ -19,28 +20,22 @@ impl ExportService {
         let estimated_size = papers_detail.len() * 500 + 200;
         let mut md = String::with_capacity(estimated_size);
 
-        md.push_str("# 工作区: ");
-        md.push_str(&workspace.name);
-        md.push_str("\n\n> 导出时间: ");
-        md.push_str(&chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string());
-        md.push_str("\n> 论文数量: ");
-        md.push_str(&papers_detail.len().to_string());
-        md.push_str("\n\n---\n\n");
+        write!(md, "# 工作区: {}\n\n> 导出时间: {}\n> 论文数量: {}\n\n---\n\n",
+            workspace.name,
+            chrono::Utc::now().format("%Y-%m-%d %H:%M"),
+            papers_detail.len()
+        ).unwrap();
 
         for (paper, first_author, corr_author, keywords) in &papers_detail {
-            md.push_str("### ");
-            md.push_str(&paper.title);
-            md.push_str("\n- **年份**: ");
-            md.push_str(&paper.year.map(|y| y.to_string()).unwrap_or_default());
-            md.push_str(" | **期刊**: ");
-            md.push_str(paper.journal.as_deref().unwrap_or(""));
-            md.push_str("\n- **DOI**: ");
-            md.push_str(paper.doi.as_deref().unwrap_or(""));
-            md.push_str("\n- **一作**: ");
-            md.push_str(first_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
-            md.push_str(" | **通讯**: ");
-            md.push_str(corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
-            md.push_str("\n- **关键词**: ");
+            write!(md, "### {}\n- **年份**: {} | **期刊**: {}\n- **DOI**: {}\n- **一作**: {} | **通讯**: {}\n- **关键词**: ",
+                paper.title,
+                paper.year.map(|y| y.to_string()).unwrap_or_default(),
+                paper.journal.as_deref().unwrap_or(""),
+                paper.doi.as_deref().unwrap_or(""),
+                first_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""),
+                corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or("")
+            ).unwrap();
+
             for (i, kw) in keywords.iter().enumerate() {
                 if i > 0 {
                     md.push_str(", ");
