@@ -678,7 +678,6 @@ impl Neo4jRepo {
                     cypher.push_str(" AND k.id IN $keyword_ids");
                 } else {
                     cypher.push_str(" WHERE k.id IN $keyword_ids");
-                    has_conditions = true;
                 }
             }
         }
