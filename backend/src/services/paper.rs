@@ -8,14 +8,14 @@ pub struct PaperService;
 
 impl PaperService {
     pub async fn import(repo: &Neo4jRepo, workspace_id: &str, req: ImportPaperRequest) -> Result<PaperDetailResponse, AppError> {
-        let client = ExternalApiClient::new();
+        let client = ExternalApiClient::shared();
         let meta = client.fetch_by_identifier(&req.identifier).await?;
 
         let _workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
 
         let paper_id = uuid::Uuid::new_v4().to_string();
-        let created_at = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now().to_rfc3339();
 
         let paper = repo.create_paper_if_not_exists(
             &paper_id,
@@ -25,17 +25,13 @@ impl PaperService {
             meta.abstract_text.as_deref(),
             meta.year,
             meta.journal.as_deref(),
-            &created_at,
+            &now,
         ).await?;
 
-        let added_at = chrono::Utc::now().to_rfc3339();
-        repo.add_paper_to_workspace(workspace_id, &paper.id, &added_at).await?;
+        repo.add_paper_to_workspace(workspace_id, &paper.id, &now).await?;
 
-        // 预分配容量，避免多次重新分配
-        let authors_count = meta.authors.len();
-        let keywords_count = meta.keywords.len();
-        
-        let mut authors: Vec<(String, String, Option<String>, bool, bool)> = Vec::with_capacity(authors_count);
+        // Pre-allocate with exact capacity
+        let mut authors: Vec<(String, String, Option<String>, bool, bool)> = Vec::with_capacity(meta.authors.len());
         for a in &meta.authors {
             authors.push((
                 uuid::Uuid::new_v4().to_string(),
@@ -48,14 +44,13 @@ impl PaperService {
 
         let (first_author, corresponding_author) = repo.create_authors_batch(&authors, &paper.id, workspace_id).await?;
 
-        let mut keywords: Vec<(String, String)> = Vec::with_capacity(keywords_count);
+        let mut keywords: Vec<(String, String)> = Vec::with_capacity(meta.keywords.len());
         for k in &meta.keywords {
             keywords.push((uuid::Uuid::new_v4().to_string(), k.clone()));
         }
 
         repo.add_keywords_batch(&keywords, &paper.id).await?;
 
-        // 使用已分配的 keywords，避免额外的迭代
         let keyword_models: Vec<crate::models::keyword::Keyword> = keywords
             .into_iter()
             .map(|(id, name)| crate::models::keyword::Keyword { id, name })

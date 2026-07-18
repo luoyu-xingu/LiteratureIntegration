@@ -67,11 +67,20 @@ impl ExternalApiClient {
         }
     }
 
+    /// Returns a shared static instance to avoid re-creating the HTTP client on every call.
+    /// The reqwest::Client internally maintains a connection pool; reusing it avoids
+    /// repeated TLS handshakes and DNS lookups.
+    pub fn shared() -> &'static Self {
+        static INSTANCE: std::sync::OnceLock<ExternalApiClient> = std::sync::OnceLock::new();
+        INSTANCE.get_or_init(ExternalApiClient::new)
+    }
+
     pub async fn fetch_by_identifier(&self, identifier: &str) -> Result<PaperMeta, AppError> {
         let trimmed = identifier.trim();
-        let lower = trimmed.to_ascii_lowercase();
-        if trimmed.starts_with("10.") || lower.starts_with("doi:") {
-            let doi = if lower.starts_with("doi:") {
+        let is_doi = trimmed.starts_with("10.")
+            || trimmed.as_bytes().get(0..4).map_or(false, |s| s.eq_ignore_ascii_case(b"doi:"));
+        if is_doi {
+            let doi = if trimmed.as_bytes().get(0..4).map_or(false, |s| s.eq_ignore_ascii_case(b"doi:")) {
                 trimmed[4..].trim()
             } else {
                 trimmed
@@ -217,17 +226,27 @@ fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
 }
 
 fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    // 预估容量：统计开标签出现次数
     let open_tag = format!("<{}>", tag);
     let close_tag = format!("</{}>", tag);
-    let estimated_count = xml.matches(&open_tag as &str).count();
-    let mut results = Vec::with_capacity(estimated_count);
+    // Estimate capacity by counting occurrences of the tag name
+    let tag_marker = tag.as_bytes();
+    let mut estimated = 0;
+    let mut pos = 0;
+    while pos + tag_marker.len() <= xml.len() {
+        if xml.as_bytes()[pos..].starts_with(tag_marker) {
+            estimated += 1;
+            pos += tag_marker.len();
+        } else {
+            pos += 1;
+        }
+    }
+    let mut results = Vec::with_capacity(estimated.min(64));
     let mut search_from = 0;
     let open_len = open_tag.len();
     let close_len = close_tag.len();
     while let Some(start) = xml[search_from..].find(&open_tag) {
         let content_start = search_from + start + open_len;
-        if let Some(content_end) = xml[content_start..].find(&close_tag as &str) {
+        if let Some(content_end) = xml[content_start..].find(&close_tag) {
             results.push(
                 xml[content_start..content_start + content_end]
                     .trim()

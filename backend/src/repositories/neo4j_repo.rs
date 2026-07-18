@@ -4,8 +4,9 @@ use crate::errors::AppError;
 
 fn is_session_token_error(err: &neo4rs::Error) -> bool {
     let msg = err.to_string();
-    let msg_lower = msg.to_lowercase();
-    msg_lower.contains("invalid session token") || (msg_lower.contains("session") && msg_lower.contains("token"))
+    let msg_lower = msg.to_ascii_lowercase();
+    msg_lower.contains("invalid session token")
+        || (msg_lower.contains("session") && msg_lower.contains("token"))
 }
 
 #[derive(Clone)]
@@ -603,18 +604,15 @@ impl Neo4jRepo {
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        // Use STARTS WITH for prefix queries (index-accelerated), CONTAINS as fallback
+        // Single query with OR conditions instead of UNION to avoid duplicates
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE p.title STARTS WITH $query OR p.abstract STARTS WITH $query
-                      RETURN p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
-                      RETURN p
+                        OR p.title CONTAINS $query OR p.abstract CONTAINS $query
+                      RETURN DISTINCT p
                       UNION
                       MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
                       WHERE k.name STARTS WITH $query OR k.name = $query
-                      RETURN p
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
         let query = neo4rs::query(cypher)
@@ -623,16 +621,22 @@ impl Neo4jRepo {
 
         let mut result = run_query!(self, query);
         let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
+        let mut seen_ids = std::collections::HashSet::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
-            papers.push(paper_from_node(&node));
+            let id = node.get::<String>("id").unwrap_or_default();
+            if seen_ids.insert(id) {
+                papers.push(paper_from_node(&node));
+            }
         }
         Ok(papers)
     }
 
     pub async fn search_by_author(&self, workspace_id: &str, author_name: &str) -> Result<Vec<crate::models::dto::AuthorWithPapers>, AppError> {
+        // Use CONTAINS alone since STARTS WITH matches are a subset of CONTAINS matches;
+        // this avoids scanning the Author index twice and deduplicating in application code.
         let cypher = "MATCH (a:Author) 
-                      WHERE a.name STARTS WITH $author_name OR a.name CONTAINS $author_name
+                      WHERE a.name CONTAINS $author_name
                       MATCH (a)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p:Paper)<-[:CONTAINS]-(w:Workspace {id: $workspace_id}) 
                       RETURN a, collect(DISTINCT p) AS papers 
                       ORDER BY size(papers) DESC 
