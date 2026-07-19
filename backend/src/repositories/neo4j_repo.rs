@@ -4,9 +4,8 @@ use crate::errors::AppError;
 
 fn is_session_token_error(err: &neo4rs::Error) -> bool {
     let msg = err.to_string();
-    let msg_lower = msg.to_ascii_lowercase();
-    msg_lower.contains("invalid session token")
-        || (msg_lower.contains("session") && msg_lower.contains("token"))
+    msg.contains("invalid session token")
+        || (msg.contains("session") && msg.contains("token"))
 }
 
 #[derive(Clone)]
@@ -604,16 +603,14 @@ impl Neo4jRepo {
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        // Single query with OR conditions instead of UNION to avoid duplicates
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title STARTS WITH $query OR p.abstract STARTS WITH $query
-                        OR p.title CONTAINS $query OR p.abstract CONTAINS $query
-                      RETURN DISTINCT p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name STARTS WITH $query OR k.name = $query
-                      RETURN DISTINCT p
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE (p.title STARTS WITH $query OR p.abstract STARTS WITH $query
+                             OR p.title CONTAINS $query OR p.abstract CONTAINS $query)
+                        OR (k.name STARTS WITH $query OR k.name = $query)
+                      WITH DISTINCT p
                       ORDER BY p.year DESC
+                      RETURN p
                       LIMIT 100";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
@@ -621,13 +618,9 @@ impl Neo4jRepo {
 
         let mut result = run_query!(self, query);
         let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
-        let mut seen_ids = std::collections::HashSet::with_capacity(DEFAULT_PAPERS_CAPACITY);
         while let Some(row) = result.next().await? {
             let node: neo4rs::Node = row.get("p")?;
-            let id = node.get::<String>("id").unwrap_or_default();
-            if seen_ids.insert(id) {
-                papers.push(paper_from_node(&node));
-            }
+            papers.push(paper_from_node(&node));
         }
         Ok(papers)
     }
