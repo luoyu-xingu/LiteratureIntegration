@@ -656,7 +656,16 @@ impl Neo4jRepo {
     }
 
     pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, _year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        let mut cypher = String::with_capacity(512);
+        // Pre-calculate capacity based on expected query size
+        const BASE_CAPACITY: usize = 150;
+        const AUTHOR_FILTER_SIZE: usize = 80;
+        const KEYWORD_FILTER_SIZE: usize = 60;
+        
+        let capacity = BASE_CAPACITY 
+            + author_ids.filter(|a| !a.is_empty()).map_or(0, |_| AUTHOR_FILTER_SIZE)
+            + keyword_ids.filter(|k| !k.is_empty()).map_or(0, |_| KEYWORD_FILTER_SIZE);
+        
+        let mut cypher = String::with_capacity(capacity);
         cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
         let mut has_conditions = false;
@@ -706,7 +715,18 @@ impl Neo4jRepo {
         Option<crate::models::author::Author>,
         Vec<crate::models::keyword::Keyword>,
     )>, AppError> {
-        let mut cypher = String::with_capacity(1024);
+        // Pre-calculate capacity based on expected query size
+        const BASE_CAPACITY: usize = 300;
+        const AUTHOR_FILTER_SIZE: usize = 80;
+        const KEYWORD_FILTER_SIZE: usize = 60;
+        const YEAR_FILTER_SIZE: usize = 50;
+        
+        let capacity = BASE_CAPACITY 
+            + author_ids.filter(|a| !a.is_empty()).map_or(0, |_| AUTHOR_FILTER_SIZE)
+            + keyword_ids.filter(|k| !k.is_empty()).map_or(0, |_| KEYWORD_FILTER_SIZE)
+            + year_range.map_or(0, |_| YEAR_FILTER_SIZE);
+        
+        let mut cypher = String::with_capacity(capacity);
         cypher.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
 
         let mut has_conditions = false;
@@ -778,6 +798,7 @@ impl Neo4jRepo {
 }
 
 fn workspace_from_node(node: &neo4rs::Node) -> Workspace {
+    // Use get with unwrap_or_default to avoid redundant Option handling
     Workspace {
         id: node.get::<String>("id").unwrap_or_default(),
         name: node.get::<String>("name").unwrap_or_default(),
@@ -787,24 +808,38 @@ fn workspace_from_node(node: &neo4rs::Node) -> Workspace {
 }
 
 fn paper_from_node(node: &neo4rs::Node) -> crate::models::paper::Paper {
+    // Helper function to filter empty strings - more efficient than filter chain
+    fn non_empty_string(s: String) -> Option<String> {
+        if s.is_empty() { None } else { Some(s) }
+    }
+    
+    // Use helper function for cleaner and slightly more efficient filtering
+    fn non_zero_year(y: i32) -> Option<i32> {
+        if y > 0 { Some(y) } else { None }
+    }
+    
     crate::models::paper::Paper {
         id: node.get::<String>("id").unwrap_or_default(),
         title: node.get::<String>("title").unwrap_or_default(),
-        doi: node.get::<String>("doi").ok().filter(|s| !s.is_empty()),
-        arxiv_id: node.get::<String>("arxiv_id").ok().filter(|s| !s.is_empty()),
-        abstract_text: node.get::<String>("abstract").ok().filter(|s| !s.is_empty()),
-        user_notes: node.get::<String>("user_notes").ok().filter(|s| !s.is_empty()),
-        year: node.get::<i32>("year").ok().filter(|y| *y > 0),
-        journal: node.get::<String>("journal").ok().filter(|s| !s.is_empty()),
+        doi: node.get::<String>("doi").ok().and_then(non_empty_string),
+        arxiv_id: node.get::<String>("arxiv_id").ok().and_then(non_empty_string),
+        abstract_text: node.get::<String>("abstract").ok().and_then(non_empty_string),
+        user_notes: node.get::<String>("user_notes").ok().and_then(non_empty_string),
+        year: node.get::<i32>("year").ok().and_then(non_zero_year),
+        journal: node.get::<String>("journal").ok().and_then(non_empty_string),
         created_at: node.get::<String>("created_at").unwrap_or_default(),
     }
 }
 
 fn author_from_node(node: &neo4rs::Node) -> crate::models::author::Author {
+    fn non_empty_string(s: String) -> Option<String> {
+        if s.is_empty() { None } else { Some(s) }
+    }
+    
     crate::models::author::Author {
         id: node.get::<String>("id").unwrap_or_default(),
         name: node.get::<String>("name").unwrap_or_default(),
-        orcid: node.get::<String>("orcid").ok().filter(|s| !s.is_empty()),
+        orcid: node.get::<String>("orcid").ok().and_then(non_empty_string),
     }
 }
 
