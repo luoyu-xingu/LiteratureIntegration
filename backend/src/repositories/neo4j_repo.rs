@@ -315,6 +315,9 @@ impl Neo4jRepo {
                         ON MATCH SET r.paper_count = r.paper_count + 1
                       )
                       UNWIND authors_list AS author
+                      WITH author
+                      ORDER BY author.is_corresponding DESC, author.is_first DESC
+                      LIMIT 2
                       RETURN author.id AS id, author.name AS name, author.orcid AS orcid, author.is_first AS is_first, author.is_corresponding AS is_corresponding";
 
         let query = neo4rs::query(cypher)
@@ -548,66 +551,40 @@ impl Neo4jRepo {
     }
 
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
-        let node_cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
-                          WITH a, count(DISTINCT p) AS paper_count,
-                               exists((a)-[:FIRST_AUTHOR_OF]->(:Paper)<-[:CONTAINS]-(w)) AS has_first,
-                               exists((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper)<-[:CONTAINS]-(w)) AS has_corresponding
-                          RETURN a.id AS id, a.name AS name, paper_count,
-                                 CASE WHEN has_first AND has_corresponding THEN 'both' WHEN has_first THEN 'first' ELSE 'corresponding' END AS author_type";
+        let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
+                      WITH w, a, count(DISTINCT p) AS paper_count,
+                           exists((a)-[:FIRST_AUTHOR_OF]->(:Paper)<-[:CONTAINS]-(w)) AS has_first,
+                           exists((a)-[:CORRESPONDING_AUTHOR_OF]->(:Paper)<-[:CONTAINS]-(w)) AS has_corresponding
+                      WITH w, collect({id: a.id, name: a.name, paper_count: paper_count, 
+                                       author_type: CASE WHEN has_first AND has_corresponding THEN 'both' WHEN has_first THEN 'first' ELSE 'corresponding' END}) AS nodes_list
+                      OPTIONAL MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
+                      WHERE a1.id < a2.id
+                      WITH nodes_list, collect({source: a1.id, target: a2.id, paper_count: r.paper_count}) AS links_list
+                      RETURN nodes_list, links_list";
 
-        let link_cypher = "MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
-                          WHERE a1.id < a2.id
-                          RETURN a1.id AS source, a2.id AS target, r.paper_count AS paper_count";
+        let query = neo4rs::query(cypher)
+            .param("workspace_id", workspace_id);
 
-        let graph = self.graph.clone();
-        let ws_id_clone = workspace_id.to_string();
-
-        let nodes_handle = tokio::spawn(async move {
-            let query = neo4rs::query(node_cypher).param("workspace_id", ws_id_clone.as_str());
-            let mut result = graph.execute(query).await?;
-            let mut nodes = Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY);
-            while let Some(row) = result.next().await? {
-                nodes.push(crate::models::dto::GraphNode {
-                    id: row.get("id")?,
-                    name: row.get("name")?,
-                    paper_count: row.get("paper_count")?,
-                    author_type: row.get("author_type")?,
-                });
-            }
-            Ok::<Vec<crate::models::dto::GraphNode>, AppError>(nodes)
-        });
-
-        let graph2 = self.graph.clone();
-        let ws_id_clone2 = workspace_id.to_string();
-
-        let links_handle = tokio::spawn(async move {
-            let query = neo4rs::query(link_cypher).param("workspace_id", ws_id_clone2.as_str());
-            let mut result = graph2.execute(query).await?;
-            let mut links = Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY);
-            while let Some(row) = result.next().await? {
-                links.push(crate::models::dto::GraphLink {
-                    source: row.get("source")?,
-                    target: row.get("target")?,
-                    paper_count: row.get("paper_count")?,
-                });
-            }
-            Ok::<Vec<crate::models::dto::GraphLink>, AppError>(links)
-        });
-
-        let nodes = nodes_handle.await.map_err(|e| AppError::Neo4jError(format!("Node task join error: {}", e)))??;
-        let links = links_handle.await.map_err(|e| AppError::Neo4jError(format!("Link task join error: {}", e)))??;
-        
-        Ok((nodes, links))
+        let mut result = run_query!(self, query);
+        if let Some(row) = result.next().await? {
+            let nodes: Vec<crate::models::dto::GraphNode> = row.get("nodes_list").unwrap_or_default();
+            let links: Vec<crate::models::dto::GraphLink> = row.get("links_list").unwrap_or_default();
+            Ok((nodes, links))
+        } else {
+            Ok((Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY), Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY)))
+        }
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE (p.title CONTAINS $query OR p.abstract CONTAINS $query)
-                        OR k.name CONTAINS $query
-                      WITH DISTINCT p
+                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
+                      WITH p
+                      UNION ALL
+                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE k.name CONTAINS $query
+                      WITH p
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC
-                      RETURN p
                       LIMIT 100";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
@@ -805,38 +782,24 @@ fn workspace_from_node(node: &neo4rs::Node) -> Workspace {
 }
 
 fn paper_from_node(node: &neo4rs::Node) -> crate::models::paper::Paper {
-    // Helper function to filter empty strings - more efficient than filter chain
-    fn non_empty_string(s: String) -> Option<String> {
-        if s.is_empty() { None } else { Some(s) }
-    }
-    
-    // Use helper function for cleaner and slightly more efficient filtering
-    fn non_zero_year(y: i32) -> Option<i32> {
-        if y > 0 { Some(y) } else { None }
-    }
-    
     crate::models::paper::Paper {
         id: node.get::<String>("id").unwrap_or_default(),
         title: node.get::<String>("title").unwrap_or_default(),
-        doi: node.get::<String>("doi").ok().and_then(non_empty_string),
-        arxiv_id: node.get::<String>("arxiv_id").ok().and_then(non_empty_string),
-        abstract_text: node.get::<String>("abstract").ok().and_then(non_empty_string),
-        user_notes: node.get::<String>("user_notes").ok().and_then(non_empty_string),
-        year: node.get::<i32>("year").ok().and_then(non_zero_year),
-        journal: node.get::<String>("journal").ok().and_then(non_empty_string),
+        doi: node.get::<String>("doi").ok().filter(|s| !s.is_empty()),
+        arxiv_id: node.get::<String>("arxiv_id").ok().filter(|s| !s.is_empty()),
+        abstract_text: node.get::<String>("abstract").ok().filter(|s| !s.is_empty()),
+        user_notes: node.get::<String>("user_notes").ok().filter(|s| !s.is_empty()),
+        year: node.get::<i32>("year").ok().filter(|&y| y > 0),
+        journal: node.get::<String>("journal").ok().filter(|s| !s.is_empty()),
         created_at: node.get::<String>("created_at").unwrap_or_default(),
     }
 }
 
 fn author_from_node(node: &neo4rs::Node) -> crate::models::author::Author {
-    fn non_empty_string(s: String) -> Option<String> {
-        if s.is_empty() { None } else { Some(s) }
-    }
-    
     crate::models::author::Author {
         id: node.get::<String>("id").unwrap_or_default(),
         name: node.get::<String>("name").unwrap_or_default(),
-        orcid: node.get::<String>("orcid").ok().and_then(non_empty_string),
+        orcid: node.get::<String>("orcid").ok().filter(|s| !s.is_empty()),
     }
 }
 
