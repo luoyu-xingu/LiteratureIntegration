@@ -225,25 +225,15 @@ fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
     Some(xml[content_start..content_start + content_end].trim().to_string())
 }
 
-fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
+pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
     let open_tag = format!("<{}>", tag);
     let close_tag = format!("</{}>", tag);
-    // Estimate capacity by counting occurrences of the tag name
-    let tag_marker = tag.as_bytes();
-    let mut estimated = 0;
-    let mut pos = 0;
-    while pos + tag_marker.len() <= xml.len() {
-        if xml.as_bytes()[pos..].starts_with(tag_marker) {
-            estimated += 1;
-            pos += tag_marker.len();
-        } else {
-            pos += 1;
-        }
-    }
-    let mut results = Vec::with_capacity(estimated.min(64));
-    let mut search_from = 0;
     let open_len = open_tag.len();
     let close_len = close_tag.len();
+    
+    let mut results = Vec::with_capacity(32);
+    let mut search_from = 0;
+    
     while let Some(start) = xml[search_from..].find(&open_tag) {
         let content_start = search_from + start + open_len;
         if let Some(content_end) = xml[content_start..].find(&close_tag) {
