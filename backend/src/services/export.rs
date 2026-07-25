@@ -17,30 +17,38 @@ impl ExportService {
         let workspace = repo.get_workspace(workspace_id).await?
             .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
 
-        let estimated_size = papers_detail.len() * 500 + 200;
+        let estimated_size = papers_detail.len() * 600 + 300;
         let mut md = String::with_capacity(estimated_size);
 
-        write!(md, "# 工作区: {}\n\n> 导出时间: {}\n> 论文数量: {}\n\n---\n\n",
+        let year_str = chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string();
+        let _ = write!(md, "# 工作区: {}\n\n> 导出时间: {}\n> 论文数量: {}\n\n---\n\n",
             workspace.name,
-            chrono::Utc::now().format("%Y-%m-%d %H:%M"),
+            year_str,
             papers_detail.len()
-        ).unwrap();
+        );
 
         for (paper, first_author, corr_author, keywords) in &papers_detail {
-            write!(md, "### {}\n- **年份**: {} | **期刊**: {}\n- **DOI**: {}\n- **一作**: {} | **通讯**: {}\n- **关键词**: ",
-                paper.title,
-                paper.year.map(|y| y.to_string()).unwrap_or_default(),
-                paper.journal.as_deref().unwrap_or(""),
-                paper.doi.as_deref().unwrap_or(""),
-                first_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""),
-                corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or("")
-            ).unwrap();
+            let year = paper.year.map(|y| y.to_string()).unwrap_or_default();
+            let journal = paper.journal.as_deref().unwrap_or("");
+            let doi = paper.doi.as_deref().unwrap_or("");
+            let first_author_name = first_author.as_ref().map(|a| a.name.as_str()).unwrap_or("");
+            let corr_author_name = corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or("");
 
+            let _ = write!(md, "### {}\n- **年份**: {} | **期刊**: {}\n- **DOI**: {}\n- **一作**: {} | **通讯**: {}\n- **关键词**: ",
+                paper.title,
+                year,
+                journal,
+                doi,
+                first_author_name,
+                corr_author_name
+            );
+
+            let kw_count = keywords.len();
             for (i, kw) in keywords.iter().enumerate() {
-                if i > 0 {
+                md.push_str(&kw.name);
+                if i < kw_count - 1 {
                     md.push_str(", ");
                 }
-                md.push_str(&kw.name);
             }
             md.push_str("\n\n");
 

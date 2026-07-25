@@ -577,12 +577,11 @@ impl Neo4jRepo {
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE p.title CONTAINS $query OR p.abstract CONTAINS $query
-                      RETURN p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE k.name CONTAINS $query
-                      RETURN p
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE p.title CONTAINS $query 
+                         OR p.abstract CONTAINS $query 
+                         OR k.name CONTAINS $query
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
         let query = neo4rs::query(cypher)
@@ -623,46 +622,17 @@ impl Neo4jRepo {
     }
 
     pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, _year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
-        let mut conditions: Vec<String> = Vec::new();
-        let mut match_clauses: Vec<&str> = Vec::new();
-        
-        if let Some(aids) = author_ids {
-            if !aids.is_empty() {
-                match_clauses.push("MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-                conditions.push("a.id IN $author_ids".to_string());
-            }
-        }
-        if let Some(kids) = keyword_ids {
-            if !kids.is_empty() {
-                match_clauses.push("MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-                conditions.push("k.id IN $keyword_ids".to_string());
-            }
-        }
+        let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                      OPTIONAL MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE ($author_ids IS NULL OR $author_ids = [] OR a.id IN $author_ids)
+                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
+                      RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200";
 
-        let where_clause = if conditions.is_empty() {
-            String::new()
-        } else {
-            format!(" WHERE {}", conditions.join(" AND "))
-        };
-
-        let cypher = format!(
-            "MATCH (w:Workspace {{id: $workspace_id}})-[:CONTAINS]->(p:Paper)
-             {}
-             {}
-             RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200",
-            match_clauses.join("\n             "),
-            where_clause
-        );
-
-        let mut query = neo4rs::query(&cypher)
-            .param("workspace_id", workspace_id);
-
-        if let Some(aids) = author_ids {
-            query = query.param("author_ids", aids);
-        }
-        if let Some(kids) = keyword_ids {
-            query = query.param("keyword_ids", kids);
-        }
+        let mut query = neo4rs::query(cypher)
+            .param("workspace_id", workspace_id)
+            .param("author_ids", author_ids.unwrap_or(&[]))
+            .param("keyword_ids", keyword_ids.unwrap_or(&[]));
 
         let mut result = run_query!(self, query);
         let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
@@ -679,58 +649,36 @@ impl Neo4jRepo {
         Option<crate::models::author::Author>,
         Vec<crate::models::keyword::Keyword>,
     )>, AppError> {
-        let mut conditions: Vec<String> = Vec::new();
-        let mut match_clauses: Vec<&str> = Vec::new();
-        
-        if let Some(aids) = author_ids {
-            if !aids.is_empty() {
-                match_clauses.push("MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-                conditions.push("a.id IN $author_ids".to_string());
-            }
-        }
-        if let Some(kids) = keyword_ids {
-            if !kids.is_empty() {
-                match_clauses.push("MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-                conditions.push("k.id IN $keyword_ids".to_string());
-            }
-        }
-        if let Some((start_year, end_year)) = year_range {
-            conditions.push(format!("p.year >= {} AND p.year <= {}", start_year, end_year));
-        }
+        let has_author_filter = author_ids.map_or(false, |a| !a.is_empty());
+        let has_keyword_filter = keyword_ids.map_or(false, |k| !k.is_empty());
+        let has_year_filter = year_range.is_some();
 
-        let where_clause = if conditions.is_empty() {
-            String::new()
-        } else {
-            format!(" WHERE {}", conditions.join(" AND "))
-        };
+        let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                      OPTIONAL MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE ($author_ids IS NULL OR $author_ids = [] OR a.id IN $author_ids)
+                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
+                        AND ($min_year IS NULL OR p.year >= $min_year)
+                        AND ($max_year IS NULL OR p.year <= $max_year)
+                      WITH DISTINCT p
+                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
+                      WITH p, collect(fa)[0] AS fa
+                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
+                      WITH p, fa, collect(ca)[0] AS ca
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword)
+                      WITH p, fa, ca, collect(kw) AS keywords
+                      RETURN p, fa, ca, keywords
+                      ORDER BY p.year DESC
+                      LIMIT 50";
 
-        let cypher = format!(
-            "MATCH (w:Workspace {{id: $workspace_id}})-[:CONTAINS]->(p:Paper)
-             {}
-             {}
-             WITH DISTINCT p
-             OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
-             WITH p, collect(fa)[0] AS fa
-             OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
-             WITH p, fa, collect(ca)[0] AS ca
-             OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-             WITH p, fa, ca, collect(k) AS keywords
-             RETURN p, fa, ca, keywords
-             ORDER BY p.year DESC
-             LIMIT 50",
-            match_clauses.join("\n             "),
-            where_clause
-        );
+        let (min_year, max_year) = year_range.unwrap_or((0, 0));
 
-        let mut query = neo4rs::query(&cypher)
-            .param("workspace_id", workspace_id);
-
-        if let Some(aids) = author_ids {
-            query = query.param("author_ids", aids);
-        }
-        if let Some(kids) = keyword_ids {
-            query = query.param("keyword_ids", kids);
-        }
+        let mut query = neo4rs::query(cypher)
+            .param("workspace_id", workspace_id)
+            .param("author_ids", author_ids.unwrap_or(&[]))
+            .param("keyword_ids", keyword_ids.unwrap_or(&[]))
+            .param("min_year", if has_year_filter { Some(min_year) } else { None })
+            .param("max_year", if has_year_filter { Some(max_year) } else { None });
 
         let mut result = run_query!(self, query);
         let mut papers_detail = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
