@@ -82,10 +82,11 @@ impl PaperService {
     pub async fn update(repo: &Neo4jRepo, id: &str, req: UpdatePaperRequest) -> Result<Paper, AppError> {
         if let Some(notes) = req.user_notes {
             repo.update_paper_notes(id, &notes).await?
-                .ok_or_else(|| AppError::PaperNotFound(id.to_string()))?;
+                .ok_or_else(|| AppError::PaperNotFound(id.to_string()))
+        } else {
+            repo.get_paper(id).await?
+                .ok_or_else(|| AppError::PaperNotFound(id.to_string()))
         }
-        repo.get_paper(id).await?
-            .ok_or_else(|| AppError::PaperNotFound(id.to_string()))
     }
 
     pub async fn remove_from_workspace(repo: &Neo4jRepo, workspace_id: &str, paper_id: &str) -> Result<(), AppError> {
