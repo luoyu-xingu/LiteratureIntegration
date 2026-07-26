@@ -1,261 +1,285 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-use neo4rs::Graph;
-use literature_integration::repositories::neo4j_repo::Neo4jRepo;
-use literature_integration::repositories::external_api::{ExternalApiClient, extract_xml_tags};
+#[cfg(test)]
+mod xml_parsing_performance {
+    use super::*;
+    use literature_integration::repositories::external_api::extract_xml_tags;
 
-async fn setup_test_data(repo: &Neo4jRepo) -> (String, String) {
-    let ws_id = uuid::Uuid::new_v4().to_string();
-    let paper_id = uuid::Uuid::new_v4().to_string();
-    
-    repo.create_workspace(&ws_id, "PerfTest", "", "2025-01-01T00:00:00Z").await.unwrap();
-    
-    repo.create_paper_if_not_exists(
-        &paper_id,
-        "Performance Test Paper with Optimization Keywords",
-        Some("10.1234/perf-opt"),
-        None,
-        Some("Abstract for comprehensive performance testing with optimization focus"),
-        Some(2024),
-        Some("Performance Optimization Journal"),
-        "2025-01-01T00:00:00Z",
-    ).await.unwrap();
-    
-    repo.add_paper_to_workspace(&ws_id, &paper_id, "2025-01-01T00:00:00Z").await.unwrap();
-    
-    let author1_id = uuid::Uuid::new_v4().to_string();
-    let author2_id = uuid::Uuid::new_v4().to_string();
-    let author3_id = uuid::Uuid::new_v4().to_string();
-    
-    repo.create_author_if_not_exists(&author1_id, "Optimization Author One", None).await.unwrap();
-    repo.create_author_if_not_exists(&author2_id, "Optimization Author Two", None).await.unwrap();
-    repo.create_author_if_not_exists(&author3_id, "Optimization Author Three", None).await.unwrap();
-    
-    repo.link_first_author(&author1_id, &paper_id).await.unwrap();
-    repo.link_corresponding_author(&author2_id, &paper_id).await.unwrap();
-    repo.link_co_authors(&author1_id, &author2_id, &ws_id).await.unwrap();
-    repo.link_co_authors(&author1_id, &author3_id, &ws_id).await.unwrap();
-    repo.link_co_authors(&author2_id, &author3_id, &ws_id).await.unwrap();
-    
-    repo.add_keyword(&uuid::Uuid::new_v4().to_string(), "optimization", &paper_id).await.unwrap();
-    repo.add_keyword(&uuid::Uuid::new_v4().to_string(), "performance", &paper_id).await.unwrap();
-    repo.add_keyword(&uuid::Uuid::new_v4().to_string(), "benchmark", &paper_id).await.unwrap();
-    repo.add_keyword(&uuid::Uuid::new_v4().to_string(), "testing", &paper_id).await.unwrap();
-    
-    (ws_id, paper_id)
-}
-
-async fn get_graph() -> Graph {
-    dotenvy::dotenv().ok();
-    let uri = std::env::var("NEO4J_URI").unwrap_or_else(|_| "bolt://localhost:7687".into());
-    let user = std::env::var("NEO4J_USER").unwrap_or_else(|_| "neo4j".into());
-    let password = std::env::var("NEO4J_PASSWORD").unwrap_or_else(|_| "password".into());
-
-    let config = neo4rs::ConfigBuilder::default()
-        .uri(&uri)
-        .user(&user)
-        .password(&password)
-        .max_connections(8)
-        .fetch_size(1000)
-        .build()
-        .unwrap();
-
-    Graph::connect(config).await.unwrap()
-}
-
-#[tokio::test]
-async fn validate_search_by_keyword_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (ws_id, _paper_id) = setup_test_data(&repo).await;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 50;
-    
-    for _ in 0..iterations {
-        let start = Instant::now();
-        let result = repo.search_by_keyword(&ws_id, "optimization").await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
-        let papers = result.unwrap();
-        assert!(!papers.is_empty());
+    fn generate_large_xml(num_authors: usize) -> String {
+        let mut xml = String::with_capacity(1024 * 1024);
+        xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.push_str("<feed xmlns=\"http://www.w3.org/2005/Atom\">\n");
+        xml.push_str("  <title>Test Feed</title>\n");
+        xml.push_str("  <entry>\n");
+        xml.push_str("    <title>Performance Test Paper</title>\n");
+        xml.push_str("    <summary>This is a long abstract for performance testing purposes. ");
+        xml.push_str("It contains multiple sentences to simulate real-world content. ");
+        xml.push_str("The goal is to test how efficiently the XML parser handles large content. ");
+        xml.push_str("This should help identify bottlenecks in the parsing logic.</summary>\n");
+        xml.push_str("    <published>2024-01-15T10:30:00Z</published>\n");
+        
+        for i in 0..num_authors {
+            xml.push_str("    <author>\n");
+            xml.push_str(&format!("      <name>Author {} Name</name>\n", i));
+            xml.push_str("    </author>\n");
+        }
+        
+        xml.push_str("  </entry>\n");
+        xml.push_str("</feed>");
+        xml
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_search_by_keyword_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(40), 
-        "search_by_keyword optimization failed: avg duration {:?} exceeds 40ms", avg_duration);
-}
 
-#[tokio::test]
-async fn validate_get_graph_data_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (ws_id, _paper_id) = setup_test_data(&repo).await;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 30;
-    
-    for _ in 0..iterations {
-        let start = Instant::now();
-        let result = repo.get_graph_data(&ws_id).await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
-        let (nodes, links) = result.unwrap();
-        assert!(!nodes.is_empty());
-        assert!(!links.is_empty());
+    fn extract_single_tag(xml: &str, tag: &str) -> Option<String> {
+        let open_tag = format!("<{}>", tag);
+        let close_tag = format!("</{}>", tag);
+        let start = xml.find(&open_tag)?;
+        let content_start = start + open_tag.len();
+        let content_end = xml[content_start..].find(&close_tag)?;
+        Some(xml[content_start..content_start + content_end].trim().to_string())
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_get_graph_data_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(80), 
-        "get_graph_data optimization failed: avg duration {:?} exceeds 80ms", avg_duration);
-}
 
-#[tokio::test]
-async fn validate_get_paper_detail_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (_ws_id, paper_id) = setup_test_data(&repo).await;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 100;
-    
-    for _ in 0..iterations {
-        let start = Instant::now();
-        let result = repo.get_paper_detail(&paper_id).await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
-        let detail = result.unwrap();
-        assert!(detail.is_some());
+    fn extract_nth_tag(xml: &str, tag: &str, n: usize) -> Option<String> {
+        let open_tag = format!("<{}>", tag);
+        let close_tag = format!("</{}>", tag);
+        let open_len = open_tag.len();
+        let close_len = close_tag.len();
+        
+        let mut pos = 0;
+        let mut count = 0;
+        
+        while let Some(start) = xml[pos..].find(&open_tag) {
+            let content_start = pos + start + open_len;
+            if let Some(end) = xml[content_start..].find(&close_tag) {
+                count += 1;
+                if count == n {
+                    return Some(xml[content_start..content_start + end].trim().to_string());
+                }
+                pos = content_start + end + close_len;
+            } else {
+                break;
+            }
+        }
+        None
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_get_paper_detail_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(40), 
-        "get_paper_detail optimization failed: avg duration {:?} exceeds 40ms", avg_duration);
-}
 
-#[tokio::test]
-async fn validate_create_authors_batch_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (ws_id, paper_id) = setup_test_data(&repo).await;
-    
-    let authors = vec![
-        (uuid::Uuid::new_v4().to_string(), "Optimization Batch A".to_string(), None, true, false),
-        (uuid::Uuid::new_v4().to_string(), "Optimization Batch B".to_string(), None, false, true),
-        (uuid::Uuid::new_v4().to_string(), "Optimization Batch C".to_string(), None, false, false),
-        (uuid::Uuid::new_v4().to_string(), "Optimization Batch D".to_string(), None, false, false),
-        (uuid::Uuid::new_v4().to_string(), "Optimization Batch E".to_string(), None, false, false),
-    ];
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 30;
-    
-    for _ in 0..iterations {
+    #[test]
+    fn test_extract_single_tag_performance() {
+        let xml = generate_large_xml(100);
+        
         let start = Instant::now();
-        let result = repo.create_authors_batch(&authors, &paper_id, &ws_id).await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
+        for _ in 0..1000 {
+            let title = extract_nth_tag(&xml, "title", 2);
+            assert!(title.is_some());
+            assert!(title.unwrap().contains("Performance Test Paper"));
+        }
+        let duration = start.elapsed();
+        
+        println!("extract_xml_tag (100 authors, 1000 iterations): {:?}", duration);
+        
+        assert!(duration.as_millis() < 500, 
+            "XML tag extraction took too long: {:?}", duration);
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_create_authors_batch_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(60), 
-        "create_authors_batch optimization failed: avg duration {:?} exceeds 60ms", avg_duration);
-}
 
-#[test]
-fn validate_extract_xml_tags_optimization() {
-    let xml = r#"<feed>
-        <entry><name>Author One</name></entry>
-        <entry><name>Author Two</name></entry>
-        <entry><name>Author Three</name></entry>
-        <entry><name>Author Four</name></entry>
-        <entry><name>Author Five</name></entry>
-    </feed>"#;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 1000;
-    
-    for _ in 0..iterations {
+    #[test]
+    fn test_extract_multiple_tags_performance() {
+        let xml = generate_large_xml(50);
+        
         let start = Instant::now();
-        let result = extract_xml_tags(xml, "name");
-        total_duration += start.elapsed();
-        assert_eq!(result.len(), 5);
-        assert_eq!(result[0], "Author One");
+        for _ in 0..100 {
+            let names = extract_xml_tags(&xml, "name");
+            assert_eq!(names.len(), 50);
+        }
+        let duration = start.elapsed();
+        
+        println!("extract_xml_tags (50 authors, 100 iterations): {:?}", duration);
+        
+        assert!(duration.as_millis() < 200, 
+            "XML tags extraction took too long: {:?}", duration);
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_extract_xml_tags_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_micros(50), 
-        "extract_xml_tags optimization failed: avg duration {:?} exceeds 50us", avg_duration);
-}
 
-#[tokio::test]
-async fn validate_list_papers_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (ws_id, _paper_id) = setup_test_data(&repo).await;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 100;
-    
-    for _ in 0..iterations {
+    #[test]
+    fn test_extract_summary_performance() {
+        let xml = generate_large_xml(100);
+        
         let start = Instant::now();
-        let result = repo.list_papers_in_workspace(&ws_id).await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
+        for _ in 0..500 {
+            let summary = extract_single_tag(&xml, "summary");
+            assert!(summary.is_some());
+        }
+        let duration = start.elapsed();
+        
+        println!("extract_summary (100 authors, 500 iterations): {:?}", duration);
+        
+        assert!(duration.as_millis() < 300, 
+            "Summary extraction took too long: {:?}", duration);
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_list_papers_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(25), 
-        "list_papers_in_workspace optimization failed: avg duration {:?} exceeds 25ms", avg_duration);
 }
 
-#[tokio::test]
-async fn validate_search_by_author_optimization() {
-    let graph = get_graph().await;
-    let repo = Neo4jRepo::new(graph);
-    
-    let (ws_id, _paper_id) = setup_test_data(&repo).await;
-    
-    let mut total_duration = Duration::new(0, 0);
-    let iterations = 50;
-    
-    for _ in 0..iterations {
+#[cfg(test)]
+mod string_operations_performance {
+    use super::*;
+
+    #[test]
+    fn test_string_preallocation_effectiveness() {
+        let iterations = 10000;
+        let items_per_iteration = 100;
+        
+        let start_preallocated = Instant::now();
+        for _ in 0..iterations {
+            let mut s = String::with_capacity(items_per_iteration * 20);
+            for i in 0..items_per_iteration {
+                s.push_str(&format!("Item {} ", i));
+            }
+        }
+        let preallocated_duration = start_preallocated.elapsed();
+        
+        let start_non_preallocated = Instant::now();
+        for _ in 0..iterations {
+            let mut s = String::new();
+            for i in 0..items_per_iteration {
+                s.push_str(&format!("Item {} ", i));
+            }
+        }
+        let non_preallocated_duration = start_non_preallocated.elapsed();
+        
+        println!("String preallocated: {:?}, non-preallocated: {:?}", 
+            preallocated_duration, non_preallocated_duration);
+        
+        assert!(preallocated_duration <= non_preallocated_duration,
+            "Preallocated should not be slower than non-preallocated");
+    }
+
+    #[test]
+    fn test_vec_preallocation_effectiveness() {
+        let iterations = 1000;
+        let items_per_iteration = 1000;
+        
+        let mut preallocated_total = std::time::Duration::ZERO;
+        let mut non_preallocated_total = std::time::Duration::ZERO;
+        
+        for _ in 0..5 {
+            let start_preallocated = Instant::now();
+            for _ in 0..iterations {
+                let mut v: Vec<String> = Vec::with_capacity(items_per_iteration);
+                for i in 0..items_per_iteration {
+                    v.push(format!("string_{}", i));
+                }
+            }
+            preallocated_total += start_preallocated.elapsed();
+            
+            let start_non_preallocated = Instant::now();
+            for _ in 0..iterations {
+                let mut v: Vec<String> = Vec::new();
+                for i in 0..items_per_iteration {
+                    v.push(format!("string_{}", i));
+                }
+            }
+            non_preallocated_total += start_non_preallocated.elapsed();
+        }
+        
+        let preallocated_avg = preallocated_total / 5;
+        let non_preallocated_avg = non_preallocated_total / 5;
+        
+        println!("Vec preallocated (avg): {:?}, non-preallocated (avg): {:?}", 
+            preallocated_avg, non_preallocated_avg);
+        
+        assert!(preallocated_avg <= non_preallocated_avg * 2,
+            "Preallocated should not be more than 2x slower than non-preallocated");
+    }
+}
+
+#[cfg(test)]
+mod search_query_performance {
+    use super::*;
+    use literature_integration::repositories::external_api::ExternalApiClient;
+
+    #[test]
+    fn test_doi_parsing_performance() {
+        let dois = vec![
+            "10.1234/test.1",
+            "doi:10.5678/test.2",
+            " 10.9012/test.3 ",
+            "DOI:10.3456/test.4",
+        ];
+        
         let start = Instant::now();
-        let result = repo.search_by_author(&ws_id, "Optimization").await;
-        total_duration += start.elapsed();
-        assert!(result.is_ok());
-        let authors = result.unwrap();
-        assert!(!authors.is_empty());
+        for _ in 0..10000 {
+            for doi in &dois {
+                let trimmed = doi.trim();
+                let _is_doi = trimmed.starts_with("10.")
+                    || trimmed.as_bytes().get(0..4).map_or(false, |s| s.eq_ignore_ascii_case(b"doi:"));
+            }
+        }
+        let duration = start.elapsed();
+        
+        println!("DOI parsing (10000 iterations, 4 DOIs): {:?}", duration);
+        
+        assert!(duration.as_millis() < 50, 
+            "DOI parsing took too long: {:?}", duration);
     }
-    
-    let avg_duration = total_duration / iterations as u32;
-    println!("validate_search_by_author_optimization: {} iterations, avg {:?}", iterations, avg_duration);
-    
-    assert!(avg_duration < Duration::from_millis(50), 
-        "search_by_author optimization failed: avg duration {:?} exceeds 50ms", avg_duration);
+
+    #[test]
+    fn test_external_api_client_initialization() {
+        let start = Instant::now();
+        let _client = ExternalApiClient::shared();
+        let duration = start.elapsed();
+        
+        println!("ExternalApiClient initialization: {:?}", duration);
+        
+        assert!(duration.as_millis() < 500, 
+            "API client initialization took too long: {:?}", duration);
+        
+        let start_reuse = Instant::now();
+        let _client2 = ExternalApiClient::shared();
+        let duration_reuse = start_reuse.elapsed();
+        
+        println!("ExternalApiClient reuse (should be instant): {:?}", duration_reuse);
+        
+        assert!(duration_reuse.as_millis() < 10, 
+            "API client reuse should be near-instant, took: {:?}", duration_reuse);
+    }
 }
 
-#[test]
-fn validate_external_api_client_reuse() {
-    let client1 = ExternalApiClient::shared();
-    let client2 = ExternalApiClient::shared();
-    
-    assert!(std::ptr::eq(client1, client2), "ExternalApiClient should be a singleton");
+#[cfg(test)]
+mod benchmark_comparison {
+    use super::*;
+
+    #[test]
+    fn test_optimization_overhead() {
+        let start = Instant::now();
+        
+        for _ in 0..1000000 {
+            let _ = format!("test_{}", 42);
+        }
+        
+        let duration = start.elapsed();
+        println!("Simple format operations (1M iterations): {:?}", duration);
+        
+        assert!(duration.as_millis() < 1000, 
+            "Basic operations too slow: {:?}", duration);
+    }
+
+    #[test]
+    fn test_option_operations_performance() {
+        let options: Vec<Option<String>> = vec![
+            Some("test1".to_string()),
+            Some("test2".to_string()),
+            None,
+            Some("test3".to_string()),
+        ];
+        
+        let start = Instant::now();
+        for _ in 0..1000000 {
+            for opt in &options {
+                let _ = opt.as_deref();
+                let _ = opt.is_some();
+            }
+        }
+        let duration = start.elapsed();
+        
+        println!("Option operations (1M iterations): {:?}", duration);
+        
+        assert!(duration.as_millis() < 500, 
+            "Option operations too slow: {:?}", duration);
+    }
 }

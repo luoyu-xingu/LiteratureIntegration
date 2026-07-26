@@ -576,17 +576,21 @@ impl Neo4jRepo {
     }
 
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
+        let query_lower = query_str.to_lowercase();
+        
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE p.title CONTAINS $query 
-                         OR p.abstract CONTAINS $query 
-                         OR k.name CONTAINS $query
-                      RETURN DISTINCT p
+                      WHERE toLower(p.title) CONTAINS $query_lower 
+                         OR (p.abstract IS NOT NULL AND toLower(p.abstract) CONTAINS $query_lower)
+                      WITH p
+                      UNION
+                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
+                      WHERE toLower(k.name) CONTAINS $query_lower
+                      RETURN p
                       ORDER BY p.year DESC
                       LIMIT 100";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("query", query_str);
+            .param("query_lower", query_lower);
 
         let mut result = run_query!(self, query);
         let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
@@ -594,18 +598,21 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
         }
+        papers.shrink_to_fit();
         Ok(papers)
     }
 
     pub async fn search_by_author(&self, workspace_id: &str, author_name: &str) -> Result<Vec<crate::models::dto::AuthorWithPapers>, AppError> {
+        let author_name_lower = author_name.to_lowercase();
+        
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[r:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
-                      WHERE a.name CONTAINS $author_name
+                      WHERE toLower(a.name) CONTAINS $author_name_lower
                       RETURN a, collect(p) AS papers 
                       ORDER BY size(papers) DESC 
                       LIMIT 20";
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("author_name", author_name);
+            .param("author_name_lower", author_name_lower);
 
         let mut result = run_query!(self, query);
         let mut authors_with_papers = Vec::with_capacity(DEFAULT_AUTHORS_CAPACITY);
@@ -618,6 +625,7 @@ impl Neo4jRepo {
                 papers,
             });
         }
+        authors_with_papers.shrink_to_fit();
         Ok(authors_with_papers)
     }
 
@@ -651,34 +659,32 @@ impl Neo4jRepo {
     )>, AppError> {
         let has_author_filter = author_ids.map_or(false, |a| !a.is_empty());
         let has_keyword_filter = keyword_ids.map_or(false, |k| !k.is_empty());
-        let has_year_filter = year_range.is_some();
 
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      OPTIONAL MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE ($author_ids IS NULL OR $author_ids = [] OR a.id IN $author_ids)
-                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
-                        AND ($min_year IS NULL OR p.year >= $min_year)
+                      WHERE ($min_year IS NULL OR p.year >= $min_year)
                         AND ($max_year IS NULL OR p.year <= $max_year)
-                      WITH DISTINCT p
+                      WITH p
                       OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
                       WITH p, collect(fa)[0] AS fa
                       OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
                       WITH p, fa, collect(ca)[0] AS ca
                       OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword)
                       WITH p, fa, ca, collect(kw) AS keywords
+                      WHERE ($author_ids IS NULL OR $author_ids = [] OR fa.id IN $author_ids OR ca.id IN $author_ids)
+                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR ANY(kw IN keywords WHERE kw.id IN $keyword_ids))
                       RETURN p, fa, ca, keywords
                       ORDER BY p.year DESC
                       LIMIT 50";
 
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
+        let year_filter_active = year_range.is_some();
 
         let mut query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("author_ids", author_ids.unwrap_or(&[]))
-            .param("keyword_ids", keyword_ids.unwrap_or(&[]))
-            .param("min_year", if has_year_filter { Some(min_year) } else { None })
-            .param("max_year", if has_year_filter { Some(max_year) } else { None });
+            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
+            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
+            .param("min_year", if year_filter_active { Some(min_year) } else { None })
+            .param("max_year", if year_filter_active { Some(max_year) } else { None });
 
         let mut result = run_query!(self, query);
         let mut papers_detail = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
@@ -694,6 +700,7 @@ impl Neo4jRepo {
 
             papers_detail.push((paper_from_node(&paper_node), first_author, corresponding_author, keywords));
         }
+        papers_detail.shrink_to_fit();
         Ok(papers_detail)
     }
 }

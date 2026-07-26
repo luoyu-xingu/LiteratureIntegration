@@ -217,12 +217,26 @@ impl ExternalApiClient {
 }
 
 fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let open = format!("<{}>", tag);
-    let close = format!("</{}>", tag);
-    let start = xml.find(&open)?;
-    let content_start = start + open.len();
-    let content_end = xml[content_start..].find(&close)?;
-    Some(xml[content_start..content_start + content_end].trim().to_string())
+    let open_tag = format!("<{}>", tag);
+    let close_tag = format!("</{}>", tag);
+    let open_len = open_tag.len();
+    let close_len = close_tag.len();
+    
+    let mut pos = 0;
+    while let Some(start) = xml[pos..].find(&open_tag) {
+        let content_start = pos + start + open_len;
+        if let Some(end) = xml[content_start..].find(&close_tag) {
+            let content_end = content_start + end;
+            let content = &xml[content_start..content_end];
+            
+            let trimmed = content.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+        pos = content_start + close_len;
+    }
+    None
 }
 
 pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
@@ -231,21 +245,23 @@ pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
     let open_len = open_tag.len();
     let close_len = close_tag.len();
     
-    let mut results = Vec::with_capacity(32);
-    let mut search_from = 0;
+    let mut results = Vec::with_capacity(64);
+    let mut pos = 0;
     
-    while let Some(start) = xml[search_from..].find(&open_tag) {
-        let content_start = search_from + start + open_len;
-        if let Some(content_end) = xml[content_start..].find(&close_tag) {
-            results.push(
-                xml[content_start..content_start + content_end]
-                    .trim()
-                    .to_string(),
-            );
-            search_from = content_start + content_end + close_len;
+    while let Some(start) = xml[pos..].find(&open_tag) {
+        let content_start = pos + start + open_len;
+        if let Some(end) = xml[content_start..].find(&close_tag) {
+            let content_end = content_start + end;
+            let content = &xml[content_start..content_end];
+            let trimmed = content.trim();
+            if !trimmed.is_empty() {
+                results.push(trimmed.to_string());
+            }
+            pos = content_end + close_len;
         } else {
             break;
         }
     }
+    results.shrink_to_fit();
     results
 }
