@@ -216,41 +216,39 @@ impl ExternalApiClient {
     }
 }
 
-fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
+pub fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
     let open_tag = format!("<{}>", tag);
     let close_tag = format!("</{}>", tag);
     let open_len = open_tag.len();
-    let close_len = close_tag.len();
     
-    let mut pos = 0;
-    while let Some(start) = xml[pos..].find(&open_tag) {
-        let content_start = pos + start + open_len;
-        if let Some(end) = xml[content_start..].find(&close_tag) {
-            let content_end = content_start + end;
-            let content = &xml[content_start..content_end];
-            
-            let trimmed = content.trim();
-            if !trimmed.is_empty() {
-                return Some(trimmed.to_string());
-            }
-        }
-        pos = content_start + close_len;
+    let start = xml.find(&open_tag)?;
+    let content_start = start + open_len;
+    
+    let end = xml[content_start..].find(&close_tag)?;
+    let content_end = content_start + end;
+    
+    let content = &xml[content_start..content_end];
+    let trimmed = content.trim();
+    
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
     }
-    None
 }
 
 pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open_tag = format!("<{}>", tag);
-    let close_tag = format!("</{}>", tag);
-    let open_len = open_tag.len();
-    let close_len = close_tag.len();
+    let open_pattern = format!("<{}>", tag);
+    let close_pattern = format!("</{}>", tag);
+    let open_len = open_pattern.len();
+    let close_len = close_pattern.len();
     
-    let mut results = Vec::with_capacity(64);
+    let mut results = Vec::with_capacity(16);
     let mut pos = 0;
     
-    while let Some(start) = xml[pos..].find(&open_tag) {
+    while let Some(start) = xml[pos..].find(&open_pattern) {
         let content_start = pos + start + open_len;
-        if let Some(end) = xml[content_start..].find(&close_tag) {
+        if let Some(end) = xml[content_start..].find(&close_pattern) {
             let content_end = content_start + end;
             let content = &xml[content_start..content_end];
             let trimmed = content.trim();
@@ -262,6 +260,6 @@ pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
             break;
         }
     }
-    results.shrink_to_fit();
+    
     results
 }

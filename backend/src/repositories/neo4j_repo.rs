@@ -581,11 +581,8 @@ impl Neo4jRepo {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE toLower(p.title) CONTAINS $query_lower 
                          OR (p.abstract IS NOT NULL AND toLower(p.abstract) CONTAINS $query_lower)
-                      WITH p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE toLower(k.name) CONTAINS $query_lower
-                      RETURN p
+                         OR EXISTS((p)-[:HAS_KEYWORD]->(:Keyword)) AND ANY(k IN [(p)-[:HAS_KEYWORD]->(kw:Keyword) | kw] WHERE toLower(k.name) CONTAINS $query_lower)
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
         let query = neo4rs::query(cypher)
@@ -598,7 +595,6 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
         }
-        papers.shrink_to_fit();
         Ok(papers)
     }
 
@@ -625,7 +621,6 @@ impl Neo4jRepo {
                 papers,
             });
         }
-        authors_with_papers.shrink_to_fit();
         Ok(authors_with_papers)
     }
 
@@ -637,7 +632,7 @@ impl Neo4jRepo {
                         AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
                       RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200";
 
-        let mut query = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("author_ids", author_ids.unwrap_or(&[]))
             .param("keyword_ids", keyword_ids.unwrap_or(&[]));
@@ -679,7 +674,7 @@ impl Neo4jRepo {
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
         let year_filter_active = year_range.is_some();
 
-        let mut query = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
             .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
@@ -700,7 +695,6 @@ impl Neo4jRepo {
 
             papers_detail.push((paper_from_node(&paper_node), first_author, corresponding_author, keywords));
         }
-        papers_detail.shrink_to_fit();
         Ok(papers_detail)
     }
 }
