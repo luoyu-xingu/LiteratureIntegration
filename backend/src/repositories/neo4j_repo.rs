@@ -295,22 +295,18 @@ impl Neo4jRepo {
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
                       MERGE (a:Author {name: $names[idx], orcid: COALESCE($orcids[idx], '')})
                       ON CREATE SET a.id = $ids[idx]
-                      WITH a, idx, $paper_id AS pid
-                      WITH a, idx, pid, idx = $first_idx AS is_first, idx = $corr_idx AS is_corresponding
-                      FOREACH (_ IN CASE WHEN is_first THEN [1] ELSE [] END |
-                        MATCH (p:Paper {id: pid})
-                        MERGE (a)-[:FIRST_AUTHOR_OF]->(p)
-                      )
-                      FOREACH (_ IN CASE WHEN is_corresponding THEN [1] ELSE [] END |
-                        MATCH (p:Paper {id: pid})
-                        MERGE (a)-[:CORRESPONDING_AUTHOR_OF]->(p)
-                      )
-                      WITH a, is_first, is_corresponding, $workspace_id AS ws_id, $first_idx AS first_idx, $corr_idx AS corr_idx
-                      WITH *, a.id AS aid, idx AS author_idx
-                      WITH *
+                      WITH a, idx
+                      MATCH (p:Paper {id: $paper_id})
+                      WITH a, idx, p, idx = $first_idx AS is_first, idx = $corr_idx AS is_corresponding
+                      MERGE (a)-[r:FIRST_AUTHOR_OF]->(p)
+                      WHERE is_first
+                      WITH a, idx, p, is_first, is_corresponding
+                      MERGE (a)-[r2:CORRESPONDING_AUTHOR_OF]->(p)
+                      WHERE is_corresponding
+                      WITH a, is_first, is_corresponding
                       ORDER BY is_corresponding DESC, is_first DESC
                       LIMIT 2
-                      RETURN aid AS id, a.name AS name, a.orcid AS orcid, is_first, is_corresponding";
+                      RETURN a.id AS id, a.name AS name, a.orcid AS orcid, is_first, is_corresponding";
 
         let query = neo4rs::query(cypher)
             .param("ids", ids.as_slice())
@@ -318,8 +314,7 @@ impl Neo4jRepo {
             .param("orcids", orcids.as_slice())
             .param("paper_id", paper_id)
             .param("first_idx", first_idx)
-            .param("corr_idx", corr_idx)
-            .param("workspace_id", workspace_id);
+            .param("corr_idx", corr_idx);
 
         let mut result = run_query!(self, query);
         
@@ -557,7 +552,7 @@ impl Neo4jRepo {
                                 WHEN first_count > 0 THEN 'first' 
                                 ELSE 'corresponding' END AS author_type
                       WITH collect({id: a.id, name: a.name, paper_count: paper_count, author_type: author_type}) AS nodes_list
-                      MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
+                      OPTIONAL MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
                       WHERE a1.id < a2.id
                       WITH nodes_list, collect({source: a1.id, target: a2.id, paper_count: r.paper_count}) AS links_list
                       RETURN nodes_list, links_list";
@@ -582,10 +577,10 @@ impl Neo4jRepo {
                       WHERE toLower(p.title) CONTAINS $query_lower 
                          OR (p.abstract IS NOT NULL AND toLower(p.abstract) CONTAINS $query_lower)
                       WITH p
-                      UNION
-                      MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)-[:HAS_KEYWORD]->(k:Keyword)
+                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
                       WHERE toLower(k.name) CONTAINS $query_lower
-                      RETURN p
+                      WITH p
+                      RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
         let query = neo4rs::query(cypher)
@@ -607,7 +602,8 @@ impl Neo4jRepo {
         
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[r:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
                       WHERE toLower(a.name) CONTAINS $author_name_lower
-                      RETURN a, collect(p) AS papers 
+                      WITH a, collect(DISTINCT p) AS papers 
+                      RETURN a, papers
                       ORDER BY size(papers) DESC 
                       LIMIT 20";
         let query = neo4rs::query(cypher)
