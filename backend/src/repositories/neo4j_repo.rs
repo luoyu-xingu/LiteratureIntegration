@@ -633,7 +633,7 @@ impl Neo4jRepo {
                         AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
                       RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200";
 
-        let mut query = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("author_ids", author_ids.unwrap_or(&[]))
             .param("keyword_ids", keyword_ids.unwrap_or(&[]));
@@ -675,7 +675,7 @@ impl Neo4jRepo {
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
         let year_filter_active = year_range.is_some();
 
-        let mut query = neo4rs::query(cypher)
+        let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
             .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
             .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
