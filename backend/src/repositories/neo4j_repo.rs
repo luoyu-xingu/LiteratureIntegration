@@ -274,9 +274,9 @@ impl Neo4jRepo {
         workspace_id: &str,
     ) -> Result<(Option<crate::models::author::Author>, Option<crate::models::author::Author>), AppError> {
         let n = authors.len();
-        let mut ids = Vec::with_capacity(n);
-        let mut names = Vec::with_capacity(n);
-        let mut orcids = Vec::with_capacity(n);
+        let mut ids: Vec<&str> = Vec::with_capacity(n);
+        let mut names: Vec<&str> = Vec::with_capacity(n);
+        let mut orcids: Vec<&str> = Vec::with_capacity(n);
         let mut first_idx = -1i64;
         let mut corr_idx = -1i64;
 
@@ -292,6 +292,19 @@ impl Neo4jRepo {
             }
         }
 
+        // Store first and corresponding author info upfront to avoid clone in loop
+        let first_info = if first_idx >= 0 {
+            let i = first_idx as usize;
+            Some((i, authors[i].0.clone(), authors[i].1.clone(), authors[i].2.clone()))
+        } else { None };
+        let corr_info = if corr_idx >= 0 && corr_idx != first_idx {
+            let i = corr_idx as usize;
+            Some((i, authors[i].0.clone(), authors[i].1.clone(), authors[i].2.clone()))
+        } else if corr_idx >= 0 {
+            // Same as first, use None to avoid duplicate processing
+            None
+        } else { None };
+
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
                       MERGE (a:Author {name: $names[idx], orcid: COALESCE($orcids[idx], '')})
                       ON CREATE SET a.id = $ids[idx]
@@ -303,10 +316,7 @@ impl Neo4jRepo {
                       WITH a, idx, p, is_first, is_corresponding
                       MERGE (a)-[r2:CORRESPONDING_AUTHOR_OF]->(p)
                       WHERE is_corresponding
-                      WITH a, is_first, is_corresponding
-                      ORDER BY is_corresponding DESC, is_first DESC
-                      LIMIT 2
-                      RETURN a.id AS id, a.name AS name, a.orcid AS orcid, is_first, is_corresponding";
+                      RETURN count(a) AS processed";
 
         let query = neo4rs::query(cypher)
             .param("ids", ids.as_slice())
@@ -317,24 +327,31 @@ impl Neo4jRepo {
             .param("corr_idx", corr_idx);
 
         let mut result = run_query!(self, query);
-        
-        let mut first_author: Option<crate::models::author::Author> = None;
-        let mut corresponding_author: Option<crate::models::author::Author> = None;
+        // Consume the result
+        let _ = result.next().await?;
 
-        while let Some(row) = result.next().await? {
-            let id: String = row.get("id")?;
-            let name: String = row.get("name")?;
-            let orcid: Option<String> = row.get("orcid").ok().filter(|s: &String| !s.is_empty());
-            let is_first_flag: bool = row.get("is_first")?;
-            let is_corresponding_flag: bool = row.get("is_corresponding")?;
-
-            if is_first_flag && first_author.is_none() {
-                first_author = Some(crate::models::author::Author { id: id.clone(), name: name.clone(), orcid: orcid.clone() });
+        // Build first/corresponding authors from stored info (no extra DB roundtrip per row)
+        let first_author = first_info.map(|(_, id, name, orcid)| {
+            crate::models::author::Author {
+                id,
+                name,
+                orcid: orcid.filter(|s| !s.is_empty()),
             }
-            if is_corresponding_flag && corresponding_author.is_none() {
-                corresponding_author = Some(crate::models::author::Author { id, name, orcid });
+        });
+        let corresponding_author = corr_info.map(|(_, id, name, orcid)| {
+            crate::models::author::Author {
+                id,
+                name,
+                orcid: orcid.filter(|s| !s.is_empty()),
             }
-        }
+        }).or_else(|| {
+            // If first and corr are same author, reuse first
+            if corr_idx >= 0 && corr_idx == first_idx {
+                first_author.clone()
+            } else {
+                None
+            }
+        });
 
         if first_idx >= 0 && corr_idx >= 0 && first_idx != corr_idx {
             let first_author_id = ids[first_idx as usize].to_string();
@@ -701,41 +718,63 @@ impl Neo4jRepo {
     }
 }
 
+#[inline]
+fn get_str_prop(node: &neo4rs::Node, key: &str) -> String {
+    node.get::<String>(key).unwrap_or_default()
+}
+
+#[inline]
+fn get_nonempty_str(node: &neo4rs::Node, key: &str) -> Option<String> {
+    let s: Result<String, _> = node.get(key);
+    match s {
+        Ok(val) if !val.is_empty() => Some(val),
+        _ => None,
+    }
+}
+
+#[inline]
+fn get_positive_i32(node: &neo4rs::Node, key: &str) -> Option<i32> {
+    let val: Result<i32, _> = node.get(key);
+    match val {
+        Ok(y) if y > 0 => Some(y),
+        _ => None,
+    }
+}
+
 fn workspace_from_node(node: &neo4rs::Node) -> Workspace {
-    // Use get with unwrap_or_default to avoid redundant Option handling
     Workspace {
-        id: node.get::<String>("id").unwrap_or_default(),
-        name: node.get::<String>("name").unwrap_or_default(),
-        description: node.get::<String>("description").unwrap_or_default(),
-        created_at: node.get::<String>("created_at").unwrap_or_default(),
+        id: get_str_prop(node, "id"),
+        name: get_str_prop(node, "name"),
+        description: get_str_prop(node, "description"),
+        created_at: get_str_prop(node, "created_at"),
     }
 }
 
 fn paper_from_node(node: &neo4rs::Node) -> crate::models::paper::Paper {
     crate::models::paper::Paper {
-        id: node.get::<String>("id").unwrap_or_default(),
-        title: node.get::<String>("title").unwrap_or_default(),
-        doi: node.get::<String>("doi").ok().filter(|s| !s.is_empty()),
-        arxiv_id: node.get::<String>("arxiv_id").ok().filter(|s| !s.is_empty()),
-        abstract_text: node.get::<String>("abstract").ok().filter(|s| !s.is_empty()),
-        user_notes: node.get::<String>("user_notes").ok().filter(|s| !s.is_empty()),
-        year: node.get::<i32>("year").ok().filter(|&y| y > 0),
-        journal: node.get::<String>("journal").ok().filter(|s| !s.is_empty()),
-        created_at: node.get::<String>("created_at").unwrap_or_default(),
+        id: get_str_prop(node, "id"),
+        title: get_str_prop(node, "title"),
+        doi: get_nonempty_str(node, "doi"),
+        arxiv_id: get_nonempty_str(node, "arxiv_id"),
+        abstract_text: get_nonempty_str(node, "abstract"),
+        user_notes: get_nonempty_str(node, "user_notes"),
+        year: get_positive_i32(node, "year"),
+        journal: get_nonempty_str(node, "journal"),
+        created_at: get_str_prop(node, "created_at"),
     }
 }
 
 fn author_from_node(node: &neo4rs::Node) -> crate::models::author::Author {
     crate::models::author::Author {
-        id: node.get::<String>("id").unwrap_or_default(),
-        name: node.get::<String>("name").unwrap_or_default(),
-        orcid: node.get::<String>("orcid").ok().filter(|s| !s.is_empty()),
+        id: get_str_prop(node, "id"),
+        name: get_str_prop(node, "name"),
+        orcid: get_nonempty_str(node, "orcid"),
     }
 }
 
 fn keyword_from_node(node: &neo4rs::Node) -> crate::models::keyword::Keyword {
     crate::models::keyword::Keyword {
-        id: node.get::<String>("id").unwrap_or_default(),
-        name: node.get::<String>("name").unwrap_or_default(),
+        id: get_str_prop(node, "id"),
+        name: get_str_prop(node, "name"),
     }
 }
