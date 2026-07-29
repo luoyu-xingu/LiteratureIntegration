@@ -216,48 +216,180 @@ impl ExternalApiClient {
     }
 }
 
-fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let open_tag = format!("<{}>", tag);
-    let close_tag = format!("</{}>", tag);
-    let open_len = open_tag.len();
-    let close_len = close_tag.len();
+pub fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
+    let xml_bytes = xml.as_bytes();
+    let tag_bytes = tag.as_bytes();
+    let tag_len = tag_bytes.len();
     
-    let mut pos = 0;
-    while let Some(start) = xml[pos..].find(&open_tag) {
-        let content_start = pos + start + open_len;
-        if let Some(end) = xml[content_start..].find(&close_tag) {
-            let content_end = content_start + end;
+    // Pre-compute tag patterns to avoid repeated format! allocations
+    // Pattern: <tag>
+    let mut search_pos = 0usize;
+    let xml_len = xml_bytes.len();
+    
+    while search_pos < xml_len {
+        // Find opening tag: <tag>
+        let remaining = &xml_bytes[search_pos..];
+        let rem_len = remaining.len();
+        
+        if rem_len < tag_len + 2 {
+            break;
+        }
+        
+        // Manual search for "<tag>"
+        let mut found_open = None;
+        let max_scan = rem_len - tag_len - 1;
+        let mut i = 0;
+        while i < max_scan {
+            if remaining[i] == b'<' {
+                // Check if this is our opening tag
+                let mut matches = true;
+                for j in 0..tag_len {
+                    if remaining[i + 1 + j] != tag_bytes[j] {
+                        matches = false;
+                        break;
+                    }
+                }
+                if matches && remaining[i + 1 + tag_len] == b'>' {
+                    found_open = Some(i);
+                    break;
+                }
+            }
+            i += 1;
+        }
+        
+        let open_start = match found_open {
+            Some(s) => s,
+            None => break,
+        };
+        
+        let content_start = search_pos + open_start + tag_len + 2;
+        if content_start >= xml_len {
+            break;
+        }
+        
+        // Find closing tag: </tag>
+        let after_content = &xml_bytes[content_start..];
+        let after_len = after_content.len();
+        let mut close_found = None;
+        
+        if after_len >= tag_len + 3 {
+            let max_j = after_len - tag_len - 2;
+            let mut j = 0;
+            while j < max_j {
+                if after_content[j] == b'<' && after_content[j + 1] == b'/' {
+                    let mut matches = true;
+                    for k in 0..tag_len {
+                        if after_content[j + 2 + k] != tag_bytes[k] {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if matches && after_content[j + 2 + tag_len] == b'>' {
+                        close_found = Some(j);
+                        break;
+                    }
+                }
+                j += 1;
+            }
+        }
+        
+        if let Some(close_offset) = close_found {
+            let content_end = content_start + close_offset;
             let content = &xml[content_start..content_end];
-            
             let trimmed = content.trim();
             if !trimmed.is_empty() {
                 return Some(trimmed.to_string());
             }
+            search_pos = content_end + tag_len + 3;
+        } else {
+            search_pos = content_start;
         }
-        pos = content_start + close_len;
     }
     None
 }
 
 pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open_tag = format!("<{}>", tag);
-    let close_tag = format!("</{}>", tag);
-    let open_len = open_tag.len();
-    let close_len = close_tag.len();
+    let xml_bytes = xml.as_bytes();
+    let tag_bytes = tag.as_bytes();
+    let tag_len = tag_bytes.len();
+    let xml_len = xml_bytes.len();
     
-    let mut results = Vec::with_capacity(64);
-    let mut pos = 0;
+    let mut results = Vec::with_capacity(32);
+    let mut search_pos = 0usize;
     
-    while let Some(start) = xml[pos..].find(&open_tag) {
-        let content_start = pos + start + open_len;
-        if let Some(end) = xml[content_start..].find(&close_tag) {
-            let content_end = content_start + end;
+    while search_pos < xml_len {
+        let remaining = &xml_bytes[search_pos..];
+        let rem_len = remaining.len();
+        
+        if rem_len < tag_len + 2 {
+            break;
+        }
+        
+        // Find opening tag
+        let mut found_open = None;
+        let max_scan = rem_len - tag_len - 1;
+        let mut i = 0;
+        while i < max_scan {
+            if remaining[i] == b'<' {
+                let mut matches = true;
+                for j in 0..tag_len {
+                    if remaining[i + 1 + j] != tag_bytes[j] {
+                        matches = false;
+                        break;
+                    }
+                }
+                if matches && remaining[i + 1 + tag_len] == b'>' {
+                    found_open = Some(i);
+                    break;
+                }
+            }
+            i += 1;
+        }
+        
+        let open_start = match found_open {
+            Some(s) => s,
+            None => break,
+        };
+        
+        let content_start = search_pos + open_start + tag_len + 2;
+        if content_start >= xml_len {
+            break;
+        }
+        
+        // Find closing tag
+        let after_content = &xml_bytes[content_start..];
+        let after_len = after_content.len();
+        let mut close_found = None;
+        
+        if after_len >= tag_len + 3 {
+            let max_j = after_len - tag_len - 2;
+            let mut j = 0;
+            while j < max_j {
+                if after_content[j] == b'<' && after_content[j + 1] == b'/' {
+                    let mut matches = true;
+                    for k in 0..tag_len {
+                        if after_content[j + 2 + k] != tag_bytes[k] {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if matches && after_content[j + 2 + tag_len] == b'>' {
+                        close_found = Some(j);
+                        break;
+                    }
+                }
+                j += 1;
+            }
+        }
+        
+        if let Some(close_offset) = close_found {
+            let content_end = content_start + close_offset;
             let content = &xml[content_start..content_end];
             let trimmed = content.trim();
             if !trimmed.is_empty() {
                 results.push(trimmed.to_string());
             }
-            pos = content_end + close_len;
+            search_pos = content_end + tag_len + 3;
         } else {
             break;
         }
