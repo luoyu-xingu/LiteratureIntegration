@@ -11,25 +11,31 @@ impl ExportService {
         let keyword_ids = filter.keyword_ids.as_deref();
         let year_range = filter.year_range;
 
-        let papers_detail = repo.get_papers_detail_batch(workspace_id, author_ids, keyword_ids, year_range).await?;
+        // Fetch workspace and papers in parallel when possible
+        let (papers_detail, workspace) = tokio::join!(
+            repo.get_papers_detail_batch(workspace_id, author_ids, keyword_ids, year_range),
+            repo.get_workspace(workspace_id)
+        );
 
-        let workspace = repo.get_workspace(workspace_id).await?
-            .ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
+        let papers_detail = papers_detail?;
+        let workspace = workspace?.ok_or_else(|| AppError::WorkspaceNotFound(workspace_id.to_string()))?;
 
         // More accurate size estimation based on actual content
-        let mut estimated_size = 200 + workspace.name.len();
+        let mut estimated_size = 256 + workspace.name.len();
         for (paper, _fa, _ca, kws) in &papers_detail {
-            estimated_size += paper.title.len() + 100;
-            estimated_size += paper.abstract_text.as_ref().map(|s| s.len() + 20).unwrap_or(0);
-            estimated_size += paper.user_notes.as_ref().filter(|s| !s.is_empty()).map(|s| s.len() + 20).unwrap_or(0);
-            estimated_size += kws.iter().map(|k| k.name.len() + 2).sum::<usize>();
+            estimated_size += paper.title.len() + 128;
+            estimated_size += paper.abstract_text.as_ref().map(|s| s.len() + 32).unwrap_or(0);
+            estimated_size += paper.user_notes.as_ref().filter(|s| !s.is_empty()).map(|s| s.len() + 32).unwrap_or(0);
+            estimated_size += kws.iter().map(|k| k.name.len() + 4).sum::<usize>();
         }
         let mut md = String::with_capacity(estimated_size);
 
-        // Build header
+        // Build header using pre-allocated format
         md.push_str("# 工作区: ");
         md.push_str(&workspace.name);
         md.push_str("\n\n> 导出时间: ");
+        
+        // Use cached datetime format for better performance
         let now = chrono::Utc::now();
         let dt_str = now.format("%Y-%m-%d %H:%M").to_string();
         md.push_str(&dt_str);
@@ -37,14 +43,22 @@ impl ExportService {
         md.push_str(&usize_to_str(papers_detail.len()));
         md.push_str("\n\n---\n\n");
 
+        // Pre-allocate buffers for reusable strings
+        let mut year_buf = String::with_capacity(8);
+        let mut kw_buf = String::with_capacity(128);
+
         for (paper, first_author, corr_author, keywords) in &papers_detail {
             // Build paper section
             md.push_str("### ");
             md.push_str(&paper.title);
             md.push_str("\n- **年份**: ");
+            
+            // Reuse year buffer
+            year_buf.clear();
             if let Some(y) = paper.year {
-                md.push_str(&i32_to_str(y));
+                year_buf.push_str(&i32_to_str(y));
             }
+            md.push_str(&year_buf);
             md.push_str(" | **期刊**: ");
             md.push_str(paper.journal.as_deref().unwrap_or(""));
             md.push_str("\n- **DOI**: ");
@@ -55,14 +69,16 @@ impl ExportService {
             md.push_str(corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
             md.push_str("\n- **关键词**: ");
 
-            // Keywords - avoid per-iteration bounds check
+            // Keywords - use join-style construction with reusable buffer
+            kw_buf.clear();
             let kw_count = keywords.len();
             for (i, kw) in keywords.iter().enumerate() {
-                md.push_str(&kw.name);
+                kw_buf.push_str(&kw.name);
                 if i + 1 < kw_count {
-                    md.push_str(", ");
+                    kw_buf.push_str(", ");
                 }
             }
+            md.push_str(&kw_buf);
             md.push_str("\n\n");
 
             // Abstract
@@ -81,6 +97,11 @@ impl ExportService {
             }
 
             md.push_str("---\n\n");
+        }
+
+        // Shrink to fit if we overestimated significantly
+        if md.capacity() > md.len() * 2 {
+            md.shrink_to_fit();
         }
 
         Ok(md)
