@@ -1,3 +1,8 @@
+use mimalloc::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 use literature_integration::config;
 use literature_integration::routes;
 use literature_integration::repositories::neo4j_repo::Neo4jRepo;
@@ -21,7 +26,7 @@ async fn keepalive(graph: Graph) {
     }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
 async fn main() {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt::init();
