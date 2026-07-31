@@ -101,6 +101,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("w")?;
             workspaces.push(workspace_from_node(&node));
         }
+        workspaces.shrink_to_fit();
         Ok(workspaces)
     }
 
@@ -401,6 +402,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
         }
+        papers.shrink_to_fit();
         Ok(papers)
     }
 
@@ -489,6 +491,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("k")?;
             keywords.push(keyword_from_node(&node));
         }
+        keywords.shrink_to_fit();
         Ok(keywords)
     }
 
@@ -540,6 +543,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("a")?;
             authors.push(author_from_node(&node));
         }
+        authors.shrink_to_fit();
         Ok(authors)
     }
 
@@ -555,6 +559,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
         }
+        papers.shrink_to_fit();
         Ok(papers)
     }
 
@@ -579,8 +584,10 @@ impl Neo4jRepo {
 
         let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
-            let nodes: Vec<crate::models::dto::GraphNode> = row.get("nodes_list").unwrap_or_default();
-            let links: Vec<crate::models::dto::GraphLink> = row.get("links_list").unwrap_or_default();
+            let mut nodes: Vec<crate::models::dto::GraphNode> = row.get("nodes_list").unwrap_or_default();
+            let mut links: Vec<crate::models::dto::GraphLink> = row.get("links_list").unwrap_or_default();
+            nodes.shrink_to_fit();
+            links.shrink_to_fit();
             Ok((nodes, links))
         } else {
             Ok((Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY), Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY)))
@@ -661,6 +668,7 @@ impl Neo4jRepo {
             let node: neo4rs::Node = row.get("p")?;
             papers.push(paper_from_node(&node));
         }
+        papers.shrink_to_fit();
         Ok(papers)
     }
 

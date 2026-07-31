@@ -26,8 +26,7 @@ async fn keepalive(graph: Graph) {
     }
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
-async fn main() {
+async fn main_inner() {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt::init();
 
@@ -66,4 +65,18 @@ async fn main() {
         .unwrap();
     tracing::info!("Server running on {}:{}", cfg.server_host, cfg.server_port);
     axum::serve(listener, app).await.unwrap();
+}
+
+fn main() {
+    let worker_threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(8)
+        .min(16);
+
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(worker_threads)
+        .enable_all()
+        .build()
+        .expect("Failed to build Tokio runtime")
+        .block_on(main_inner());
 }
