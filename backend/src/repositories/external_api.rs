@@ -217,70 +217,124 @@ impl ExternalApiClient {
 }
 
 #[inline]
-pub fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
-    let open_tag = format!("<{}>", tag);
-    let close_tag = format!("</{}>", tag);
+fn find_tag_open(xml: &str, tag: &str, from: usize) -> Option<usize> {
+    let haystack = &xml[from..];
+    // Search for "<tag>" manually to avoid format! allocation
+    let tag_bytes = tag.as_bytes();
+    let hay_bytes = haystack.as_bytes();
+    let tag_len = tag_bytes.len();
+    let hay_len = hay_bytes.len();
+    
+    if hay_len < tag_len + 2 {
+        return None;
+    }
+    
+    let mut i = 0;
+    while i + tag_len + 2 <= hay_len {
+        if hay_bytes[i] == b'<' {
+            let mut matches = true;
+            for j in 0..tag_len {
+                if hay_bytes[i + 1 + j] != tag_bytes[j] {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches && hay_bytes[i + 1 + tag_len] == b'>' {
+                return Some(from + i);
+            }
+        }
+        i += 1;
+    }
+    None
+}
 
+#[inline]
+fn find_tag_close(xml: &str, tag: &str, from: usize) -> Option<usize> {
+    let haystack = &xml[from..];
+    // Search for "</tag>" manually to avoid format! allocation
+    let tag_bytes = tag.as_bytes();
+    let hay_bytes = haystack.as_bytes();
+    let tag_len = tag_bytes.len();
+    let hay_len = hay_bytes.len();
+    
+    if hay_len < tag_len + 3 {
+        return None;
+    }
+    
+    let mut i = 0;
+    while i + tag_len + 3 <= hay_len {
+        if hay_bytes[i] == b'<' && hay_bytes[i + 1] == b'/' {
+            let mut matches = true;
+            for j in 0..tag_len {
+                if hay_bytes[i + 2 + j] != tag_bytes[j] {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches && hay_bytes[i + 2 + tag_len] == b'>' {
+                return Some(from + i);
+            }
+        }
+        i += 1;
+    }
+    None
+}
+
+#[inline]
+pub fn extract_xml_tag(xml: &str, tag: &str) -> Option<String> {
     let mut search_pos = 0usize;
     let xml_len = xml.len();
+    let tag_end_offset = tag.len() + 2; // len("<tag>")
 
     while search_pos < xml_len {
-        let remaining = &xml[search_pos..];
-        let open_idx = remaining.find(&open_tag)?;
+        let open_idx = find_tag_open(xml, tag, search_pos)?;
 
-        let content_start = search_pos + open_idx + open_tag.len();
+        let content_start = open_idx + tag_end_offset;
         if content_start >= xml_len {
             break;
         }
 
-        let after_content = &xml[content_start..];
-        let close_idx = after_content.find(&close_tag)?;
+        let close_idx = find_tag_close(xml, tag, content_start)?;
 
-        let content_end = content_start + close_idx;
-        let content = &xml[content_start..content_end];
+        let content = &xml[content_start..close_idx];
         let trimmed = content.trim();
         if !trimmed.is_empty() {
             return Some(trimmed.to_string());
         }
-        search_pos = content_end + close_tag.len();
+        search_pos = close_idx + tag.len() + 3; // len("</tag>")
     }
     None
 }
 
 #[inline]
 pub fn extract_xml_tags(xml: &str, tag: &str) -> Vec<String> {
-    let open_tag = format!("<{}>", tag);
-    let close_tag = format!("</{}>", tag);
-
     let mut results = Vec::with_capacity(32);
     let mut search_pos = 0usize;
     let xml_len = xml.len();
+    let tag_end_offset = tag.len() + 2;
 
     while search_pos < xml_len {
-        let remaining = &xml[search_pos..];
-        let open_idx = match remaining.find(&open_tag) {
+        let open_idx = match find_tag_open(xml, tag, search_pos) {
             Some(i) => i,
             None => break,
         };
 
-        let content_start = search_pos + open_idx + open_tag.len();
+        let content_start = open_idx + tag_end_offset;
         if content_start >= xml_len {
             break;
         }
 
-        let after_content = &xml[content_start..];
-        let close_idx = match after_content.find(&close_tag) {
+        let close_idx = match find_tag_close(xml, tag, content_start) {
             Some(i) => i,
             None => break,
         };
 
-        let content_end = content_start + close_idx;
-        let content = &xml[content_start..content_end];
+        let content = &xml[content_start..close_idx];
         let trimmed = content.trim();
         if !trimmed.is_empty() {
             results.push(trimmed.to_string());
         }
-        search_pos = content_end + close_tag.len();
+        search_pos = close_idx + tag.len() + 3;
     }
     results.shrink_to_fit();
     results

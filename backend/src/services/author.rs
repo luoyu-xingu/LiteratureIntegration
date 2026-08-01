@@ -11,13 +11,18 @@ impl AuthorService {
     }
 
     pub async fn get_author_papers(repo: &Neo4jRepo, author_id: &str) -> Result<AuthorWithPapers, AppError> {
-        let papers = repo.get_author_papers(author_id).await?;
+        let (papers_opt, author_opt) = tokio::join!(
+            repo.get_author_papers(author_id),
+            repo.get_author_by_id(author_id),
+        );
+        let papers = papers_opt?;
+        let author = author_opt?.unwrap_or_else(|| Author {
+            id: author_id.to_string(),
+            name: String::new(),
+            orcid: None,
+        });
         Ok(AuthorWithPapers {
-            author: Author {
-                id: author_id.to_string(),
-                name: String::new(),
-                orcid: None,
-            },
+            author,
             papers,
         })
     }
