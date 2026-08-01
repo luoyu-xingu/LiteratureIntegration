@@ -23,7 +23,7 @@ pub struct UpdatePaperRequest {
     pub corresponding_author_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PaperDetailResponse {
     pub paper: super::paper::Paper,
     pub first_author: Option<super::author::Author>,
