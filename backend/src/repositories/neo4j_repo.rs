@@ -306,17 +306,17 @@ impl Neo4jRepo {
             None
         } else { None };
 
+        // Use FOREACH with CASE WHEN for conditional linking instead of invalid post-MERGE WHERE
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
                       MERGE (a:Author {name: $names[idx], orcid: COALESCE($orcids[idx], '')})
                       ON CREATE SET a.id = $ids[idx]
                       WITH a, idx
                       MATCH (p:Paper {id: $paper_id})
-                      WITH a, idx, p, idx = $first_idx AS is_first, idx = $corr_idx AS is_corresponding
-                      MERGE (a)-[r:FIRST_AUTHOR_OF]->(p)
-                      WHERE is_first
-                      WITH a, idx, p, is_first, is_corresponding
-                      MERGE (a)-[r2:CORRESPONDING_AUTHOR_OF]->(p)
-                      WHERE is_corresponding
+                      WITH a, idx, p,
+                           CASE WHEN idx = $first_idx THEN [1] ELSE [] END AS is_first_list,
+                           CASE WHEN idx = $corr_idx THEN [1] ELSE [] END AS is_corr_list
+                      FOREACH(_ IN is_first_list | MERGE (a)-[:FIRST_AUTHOR_OF]->(p))
+                      FOREACH(_ IN is_corr_list | MERGE (a)-[:CORRESPONDING_AUTHOR_OF]->(p))
                       RETURN count(a) AS processed";
 
         let query = neo4rs::query(cypher)
@@ -563,6 +563,17 @@ impl Neo4jRepo {
         Ok(papers)
     }
 
+    pub async fn get_author_by_id(&self, author_id: &str) -> Result<Option<crate::models::author::Author>, AppError> {
+        let query = neo4rs::query("MATCH (a:Author {id: $id}) RETURN a").param("id", author_id);
+        let mut result = run_query!(self, query);
+        if let Some(row) = result.next().await? {
+            let node: neo4rs::Node = row.get("a")?;
+            Ok(Some(author_from_node(&node)))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[r:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
                       WITH a, p, r
@@ -597,13 +608,11 @@ impl Neo4jRepo {
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let query_lower = query_str.to_lowercase();
         
+        // Use EXISTS pattern for keyword match to include papers that match by keyword only
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE toLower(p.title) CONTAINS $query_lower 
                          OR (p.abstract IS NOT NULL AND toLower(p.abstract) CONTAINS $query_lower)
-                      WITH p
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE toLower(k.name) CONTAINS $query_lower
-                      WITH p
+                         OR EXISTS { (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE toLower(k.name) CONTAINS $query_lower }
                       RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
@@ -649,8 +658,16 @@ impl Neo4jRepo {
         Ok(authors_with_papers)
     }
 
-    pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, _year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
+    pub async fn get_papers_for_export(&self, workspace_id: &str, author_ids: Option<&[String]>, keyword_ids: Option<&[String]>, year_range: Option<(i32, i32)>) -> Result<Vec<crate::models::paper::Paper>, AppError> {
+        let has_author_filter = author_ids.map_or(false, |a| !a.is_empty());
+        let has_keyword_filter = keyword_ids.map_or(false, |k| !k.is_empty());
+        let (min_year, max_year) = year_range.unwrap_or((0, 0));
+        let year_filter_active = year_range.is_some();
+
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
+                      WHERE ($min_year IS NULL OR p.year >= $min_year)
+                        AND ($max_year IS NULL OR p.year <= $max_year)
+                      WITH p
                       OPTIONAL MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
                       OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
                       WHERE ($author_ids IS NULL OR $author_ids = [] OR a.id IN $author_ids)
@@ -659,8 +676,10 @@ impl Neo4jRepo {
 
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("author_ids", author_ids.unwrap_or(&[]))
-            .param("keyword_ids", keyword_ids.unwrap_or(&[]));
+            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
+            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
+            .param("min_year", if year_filter_active { Some(min_year) } else { None })
+            .param("max_year", if year_filter_active { Some(max_year) } else { None });
 
         let mut result = run_query!(self, query);
         let mut papers = Vec::with_capacity(DEFAULT_PAPERS_CAPACITY);
