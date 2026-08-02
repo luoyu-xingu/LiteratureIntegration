@@ -34,7 +34,7 @@ impl ExportService {
         md.push_str("# 工作区: ");
         md.push_str(&workspace.name);
         md.push_str("\n\n> 导出时间: ");
-        
+
         // Use cached datetime format for better performance
         let now = chrono::Utc::now();
         let dt_str = now.format("%Y-%m-%d %H:%M").to_string();
@@ -44,21 +44,18 @@ impl ExportService {
         md.push_str("\n\n---\n\n");
 
         // Pre-allocate buffers for reusable strings
-        let mut year_buf = String::with_capacity(8);
-        let mut kw_buf = String::with_capacity(128);
+        let mut year_buf = itoa::Buffer::new();
 
         for (paper, first_author, corr_author, keywords) in &papers_detail {
             // Build paper section
             md.push_str("### ");
             md.push_str(&paper.title);
             md.push_str("\n- **年份**: ");
-            
-            // Reuse year buffer
-            year_buf.clear();
+
+            // Use itoa for fast integer to string conversion
             if let Some(y) = paper.year {
-                year_buf.push_str(&i32_to_str(y));
+                md.push_str(year_buf.format(y));
             }
-            md.push_str(&year_buf);
             md.push_str(" | **期刊**: ");
             md.push_str(paper.journal.as_deref().unwrap_or(""));
             md.push_str("\n- **DOI**: ");
@@ -69,16 +66,15 @@ impl ExportService {
             md.push_str(corr_author.as_ref().map(|a| a.name.as_str()).unwrap_or(""));
             md.push_str("\n- **关键词**: ");
 
-            // Keywords - use join-style construction with reusable buffer
-            kw_buf.clear();
-            let kw_count = keywords.len();
-            for (i, kw) in keywords.iter().enumerate() {
-                kw_buf.push_str(&kw.name);
-                if i + 1 < kw_count {
-                    kw_buf.push_str(", ");
+            // Keywords - optimized join without intermediate allocation for the comma logic
+            let mut first_kw = true;
+            for kw in keywords {
+                if !first_kw {
+                    md.push_str(", ");
                 }
+                md.push_str(&kw.name);
+                first_kw = false;
             }
-            md.push_str(&kw_buf);
             md.push_str("\n\n");
 
             // Abstract
@@ -108,72 +104,9 @@ impl ExportService {
     }
 }
 
-// Fast integer to string conversion using stack buffer
+// Fast integer to string conversion using stack buffer and itoa
 #[inline]
 fn usize_to_str(n: usize) -> String {
-    let mut buf = [0u8; 20];
-    let len = write_usize_to_buf(n, &mut buf);
-    // SAFETY: We just wrote valid UTF-8 ASCII digits
-    unsafe {
-        std::str::from_utf8_unchecked(&buf[20 - len..]).to_string()
-    }
-}
-
-#[inline]
-fn i32_to_str(n: i32) -> String {
-    let mut buf = [0u8; 20];
-    if n < 0 {
-        let len = write_abs_i32_to_buf(n, &mut buf);
-        buf[20 - len - 1] = b'-';
-        unsafe {
-            std::str::from_utf8_unchecked(&buf[20 - len - 1..]).to_string()
-        }
-    } else {
-        let len = write_pos_i32_to_buf(n as u32, &mut buf);
-        unsafe {
-            std::str::from_utf8_unchecked(&buf[20 - len..]).to_string()
-        }
-    }
-}
-
-#[inline]
-fn write_usize_to_buf(mut n: usize, buf: &mut [u8; 20]) -> usize {
-    let mut idx = 20;
-    if n == 0 {
-        idx -= 1;
-        buf[idx] = b'0';
-        return 1;
-    }
-    while n > 0 {
-        idx -= 1;
-        buf[idx] = b'0' + (n % 10) as u8;
-        n /= 10;
-    }
-    20 - idx
-}
-
-#[inline]
-fn write_pos_i32_to_buf(mut n: u32, buf: &mut [u8; 20]) -> usize {
-    let mut idx = 20;
-    if n == 0 {
-        idx -= 1;
-        buf[idx] = b'0';
-        return 1;
-    }
-    while n > 0 {
-        idx -= 1;
-        buf[idx] = b'0' + (n % 10) as u8;
-        n /= 10;
-    }
-    20 - idx
-}
-
-#[inline]
-fn write_abs_i32_to_buf(n: i32, buf: &mut [u8; 20]) -> usize {
-    let abs = if n == i32::MIN {
-        2147483648u32
-    } else {
-        n.unsigned_abs()
-    };
-    write_pos_i32_to_buf(abs, buf)
+    let mut buf = itoa::Buffer::new();
+    buf.format(n).to_string()
 }

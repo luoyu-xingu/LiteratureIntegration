@@ -293,19 +293,6 @@ impl Neo4jRepo {
             }
         }
 
-        // Store first and corresponding author info upfront to avoid clone in loop
-        let first_info = if first_idx >= 0 {
-            let i = first_idx as usize;
-            Some((i, authors[i].0.clone(), authors[i].1.clone(), authors[i].2.clone()))
-        } else { None };
-        let corr_info = if corr_idx >= 0 && corr_idx != first_idx {
-            let i = corr_idx as usize;
-            Some((i, authors[i].0.clone(), authors[i].1.clone(), authors[i].2.clone()))
-        } else if corr_idx >= 0 {
-            // Same as first, use None to avoid duplicate processing
-            None
-        } else { None };
-
         // Use FOREACH with CASE WHEN for conditional linking instead of invalid post-MERGE WHERE
         let cypher = "UNWIND range(0, size($ids)-1) AS idx
                       MERGE (a:Author {name: $names[idx], orcid: COALESCE($orcids[idx], '')})
@@ -331,33 +318,29 @@ impl Neo4jRepo {
         // Consume the result
         let _ = result.next().await?;
 
-        // Build first/corresponding authors from stored info (no extra DB roundtrip per row)
-        let first_author = first_info.map(|(_, id, name, orcid)| {
-            crate::models::author::Author {
-                id,
-                name,
-                orcid: orcid.filter(|s| !s.is_empty()),
-            }
-        });
-        let corresponding_author = corr_info.map(|(_, id, name, orcid)| {
-            crate::models::author::Author {
-                id,
-                name,
-                orcid: orcid.filter(|s| !s.is_empty()),
-            }
-        }).or_else(|| {
-            // If first and corr are same author, reuse first
-            if corr_idx >= 0 && corr_idx == first_idx {
-                first_author.clone()
-            } else {
-                None
-            }
-        });
+        // Build first/corresponding authors directly from slice - avoid intermediate clones
+        let build_author = |idx: i64| {
+            if idx < 0 { return None; }
+            let i = idx as usize;
+            let a = &authors[i];
+            Some(crate::models::author::Author {
+                id: a.0.clone(),
+                name: a.1.clone(),
+                orcid: a.2.clone().filter(|s| !s.is_empty()),
+            })
+        };
+
+        let first_author = build_author(first_idx);
+        let corresponding_author = if corr_idx >= 0 && corr_idx == first_idx {
+            first_author.clone()
+        } else {
+            build_author(corr_idx)
+        };
 
         if first_idx >= 0 && corr_idx >= 0 && first_idx != corr_idx {
-            let first_author_id = ids[first_idx as usize].to_string();
-            let corr_author_id = ids[corr_idx as usize].to_string();
-            self.link_co_authors(&first_author_id, &corr_author_id, workspace_id).await?;
+            let first_author_id = ids[first_idx as usize];
+            let corr_author_id = ids[corr_idx as usize];
+            self.link_co_authors(first_author_id, corr_author_id, workspace_id).await?;
         }
 
         Ok((first_author, corresponding_author))
@@ -664,20 +647,22 @@ impl Neo4jRepo {
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
         let year_filter_active = year_range.is_some();
 
+        // Optimize query: filter early with EXISTS subqueries instead of post-OPTIONAL MATCH filtering
+        // This avoids producing intermediate rows that are discarded later
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE ($min_year IS NULL OR p.year >= $min_year)
                         AND ($max_year IS NULL OR p.year <= $max_year)
-                      WITH p
-                      OPTIONAL MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WHERE ($author_ids IS NULL OR $author_ids = [] OR a.id IN $author_ids)
-                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR k.id IN $keyword_ids)
+                        AND ($author_ids IS NULL OR $author_ids = [] OR
+                             EXISTS { (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p) WHERE a.id IN $author_ids })
+                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR
+                             EXISTS { (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE k.id IN $keyword_ids })
                       RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200";
 
+        let empty: &[String] = &[];
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
-            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
+            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { empty })
+            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { empty })
             .param("min_year", if year_filter_active { Some(min_year) } else { None })
             .param("max_year", if year_filter_active { Some(max_year) } else { None });
 
@@ -699,10 +684,18 @@ impl Neo4jRepo {
     )>, AppError> {
         let has_author_filter = author_ids.map_or(false, |a| !a.is_empty());
         let has_keyword_filter = keyword_ids.map_or(false, |k| !k.is_empty());
+        let (min_year, max_year) = year_range.unwrap_or((0, 0));
+        let year_filter_active = year_range.is_some();
 
+        // Use EXISTS for early filtering to reduce intermediate result size before collection
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE ($min_year IS NULL OR p.year >= $min_year)
                         AND ($max_year IS NULL OR p.year <= $max_year)
+                        AND ($author_ids IS NULL OR $author_ids = [] OR
+                             EXISTS { (fa:Author)-[:FIRST_AUTHOR_OF]->(p) WHERE fa.id IN $author_ids } OR
+                             EXISTS { (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) WHERE ca.id IN $author_ids })
+                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR
+                             EXISTS { (p)-[:HAS_KEYWORD]->(kw:Keyword) WHERE kw.id IN $keyword_ids })
                       WITH p
                       OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
                       WITH p, collect(fa)[0] AS fa
@@ -716,13 +709,11 @@ impl Neo4jRepo {
                       ORDER BY p.year DESC
                       LIMIT 50";
 
-        let (min_year, max_year) = year_range.unwrap_or((0, 0));
-        let year_filter_active = year_range.is_some();
-
+        let empty: &[String] = &[];
         let query = neo4rs::query(cypher)
             .param("workspace_id", workspace_id)
-            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { &[] })
-            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { &[] })
+            .param("author_ids", if has_author_filter { author_ids.unwrap() } else { empty })
+            .param("keyword_ids", if has_keyword_filter { keyword_ids.unwrap() } else { empty })
             .param("min_year", if year_filter_active { Some(min_year) } else { None })
             .param("max_year", if year_filter_active { Some(max_year) } else { None });
 
