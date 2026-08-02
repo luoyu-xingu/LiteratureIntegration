@@ -37,7 +37,7 @@ pub struct GraphDataResponse {
     pub links: Vec<GraphLink>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphNode {
     pub id: String,
     pub name: String,
@@ -45,7 +45,7 @@ pub struct GraphNode {
     pub author_type: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphLink {
     pub source: String,
     pub target: String,
