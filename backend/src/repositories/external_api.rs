@@ -136,10 +136,17 @@ impl ExternalApiClient {
             for (i, a) in crossref_authors.into_iter().enumerate() {
                 let given = a.given.unwrap_or_default();
                 let family = a.family.unwrap_or_default();
+                // Build the "given family" name with a single allocation instead
+                // of `format!`, which would allocate a formatting buffer plus the
+                // final String.
                 let name = if given.is_empty() {
                     family
                 } else {
-                    format!("{} {}", given, family)
+                    let mut n = String::with_capacity(given.len() + 1 + family.len());
+                    n.push_str(&given);
+                    n.push(' ');
+                    n.push_str(&family);
+                    n
                 };
                 authors.push(AuthorMeta {
                     name,
