@@ -72,6 +72,24 @@ pub struct AuthorWithPapers {
     pub papers: Vec<super::paper::Paper>,
 }
 
+/// Typed search response. Serialized directly via serde instead of building a
+/// `serde_json::Value` tree (which `serde_json::json!` does), avoiding a full
+/// intermediate Value allocation + re-serialization pass.
+#[derive(Debug, Serialize)]
+#[serde(tag = "mode")]
+pub enum SearchResponse {
+    #[serde(rename = "keyword")]
+    Keyword {
+        query: String,
+        results: Vec<super::paper::Paper>,
+    },
+    #[serde(rename = "author")]
+    Author {
+        query: String,
+        results: Vec<AuthorWithPapers>,
+    },
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

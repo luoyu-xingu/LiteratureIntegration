@@ -40,11 +40,13 @@ impl ExportService {
         let dt_str = now.format("%Y-%m-%d %H:%M").to_string();
         md.push_str(&dt_str);
         md.push_str("\n> 论文数量: ");
-        md.push_str(&usize_to_str(papers_detail.len()));
-        md.push_str("\n\n---\n\n");
 
-        // Pre-allocate buffers for reusable strings
-        let mut year_buf = itoa::Buffer::new();
+        // Reuse a single itoa buffer for all integer-to-string conversions
+        // (count header, paper years) and write directly into `md` to avoid
+        // intermediate String allocations.
+        let mut num_buf = itoa::Buffer::new();
+        md.push_str(num_buf.format(papers_detail.len()));
+        md.push_str("\n\n---\n\n");
 
         for (paper, first_author, corr_author, keywords) in &papers_detail {
             // Build paper section
@@ -52,9 +54,9 @@ impl ExportService {
             md.push_str(&paper.title);
             md.push_str("\n- **年份**: ");
 
-            // Use itoa for fast integer to string conversion
+            // Reuse the shared itoa buffer for fast integer-to-string conversion.
             if let Some(y) = paper.year {
-                md.push_str(year_buf.format(y));
+                md.push_str(num_buf.format(y));
             }
             md.push_str(" | **期刊**: ");
             md.push_str(paper.journal.as_deref().unwrap_or(""));
@@ -102,11 +104,4 @@ impl ExportService {
 
         Ok(md)
     }
-}
-
-// Fast integer to string conversion using stack buffer and itoa
-#[inline]
-fn usize_to_str(n: usize) -> String {
-    let mut buf = itoa::Buffer::new();
-    buf.format(n).to_string()
 }

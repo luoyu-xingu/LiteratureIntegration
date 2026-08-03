@@ -67,11 +67,11 @@ impl PaperService {
         let (first_author, corresponding_author) = authors_result?;
         keywords_result?;
 
-        // Transform keywords without extra allocations
-        let keyword_models: Vec<crate::models::keyword::Keyword> = keywords
-            .into_iter()
-            .map(|(id, name)| crate::models::keyword::Keyword { id, name })
-            .collect();
+        // Transform keywords into models with exact capacity to avoid reallocation.
+        let mut keyword_models = Vec::with_capacity(keywords.len());
+        for (id, name) in keywords {
+            keyword_models.push(crate::models::keyword::Keyword { id, name });
+        }
 
         Ok(PaperDetailResponse {
             paper,
