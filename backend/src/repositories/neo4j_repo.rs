@@ -487,9 +487,9 @@ impl Neo4jRepo {
         let cypher = "MATCH (p:Paper {id: $paper_id})
                       WITH p
                       OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
-                      WITH p, collect(fa)[0] AS fa
+                      WITH p, head(collect(fa)) AS fa
                       OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
-                      WITH p, fa, collect(ca)[0] AS ca
+                      WITH p, fa, head(collect(ca)) AS ca
                       OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
                       WITH p, fa, ca, collect(k) AS keywords
                       RETURN p, fa, ca, keywords";
@@ -559,7 +559,6 @@ impl Neo4jRepo {
 
     pub async fn get_graph_data(&self, workspace_id: &str) -> Result<(Vec<crate::models::dto::GraphNode>, Vec<crate::models::dto::GraphLink>), AppError> {
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)<-[r:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]-(a:Author)
-                      WITH a, p, r
                       WITH a, count(DISTINCT p) AS paper_count,
                            sum(CASE WHEN type(r) = 'FIRST_AUTHOR_OF' THEN 1 ELSE 0 END) AS first_count,
                            sum(CASE WHEN type(r) = 'CORRESPONDING_AUTHOR_OF' THEN 1 ELSE 0 END) AS corr_count
@@ -591,11 +590,11 @@ impl Neo4jRepo {
     pub async fn search_by_keyword(&self, workspace_id: &str, query_str: &str) -> Result<Vec<crate::models::paper::Paper>, AppError> {
         let query_lower = query_str.to_lowercase();
         
-        // Use EXISTS pattern for keyword match to include papers that match by keyword only
+        // EXISTS subquery first for selectivity: keyword matches can use the Keyword.name index
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
-                      WHERE toLower(p.title) CONTAINS $query_lower 
+                      WHERE EXISTS { (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE toLower(k.name) CONTAINS $query_lower }
+                         OR toLower(p.title) CONTAINS $query_lower 
                          OR (p.abstract IS NOT NULL AND toLower(p.abstract) CONTAINS $query_lower)
-                         OR EXISTS { (p)-[:HAS_KEYWORD]->(k:Keyword) WHERE toLower(k.name) CONTAINS $query_lower }
                       RETURN DISTINCT p
                       ORDER BY p.year DESC
                       LIMIT 100";
@@ -687,7 +686,9 @@ impl Neo4jRepo {
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
         let year_filter_active = year_range.is_some();
 
-        // Use EXISTS for early filtering to reduce intermediate result size before collection
+        // Use EXISTS for early filtering to reduce intermediate result size before collection.
+        // Post-OPTIONAL MATCH WHERE removed: EXISTS subqueries in the first WHERE already
+        // guarantee the matching authors/keywords exist, making the second filter redundant.
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE ($min_year IS NULL OR p.year >= $min_year)
                         AND ($max_year IS NULL OR p.year <= $max_year)
@@ -698,13 +699,11 @@ impl Neo4jRepo {
                              EXISTS { (p)-[:HAS_KEYWORD]->(kw:Keyword) WHERE kw.id IN $keyword_ids })
                       WITH p
                       OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
-                      WITH p, collect(fa)[0] AS fa
+                      WITH p, head(collect(fa)) AS fa
                       OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
-                      WITH p, fa, collect(ca)[0] AS ca
+                      WITH p, fa, head(collect(ca)) AS ca
                       OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword)
                       WITH p, fa, ca, collect(kw) AS keywords
-                      WHERE ($author_ids IS NULL OR $author_ids = [] OR fa.id IN $author_ids OR ca.id IN $author_ids)
-                        AND ($keyword_ids IS NULL OR $keyword_ids = [] OR ANY(kw IN keywords WHERE kw.id IN $keyword_ids))
                       RETURN p, fa, ca, keywords
                       ORDER BY p.year DESC
                       LIMIT 50";
