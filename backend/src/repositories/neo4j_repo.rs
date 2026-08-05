@@ -275,6 +275,10 @@ impl Neo4jRepo {
         workspace_id: &str,
     ) -> Result<(Option<crate::models::author::Author>, Option<crate::models::author::Author>), AppError> {
         let n = authors.len();
+        if n == 0 {
+            return Ok((None, None));
+        }
+
         let mut ids: Vec<&str> = Vec::with_capacity(n);
         let mut names: Vec<&str> = Vec::with_capacity(n);
         let mut orcids: Vec<&str> = Vec::with_capacity(n);
@@ -337,6 +341,7 @@ impl Neo4jRepo {
             build_author(corr_idx)
         };
 
+        // Use indices to avoid repeated array lookups
         if first_idx >= 0 && corr_idx >= 0 && first_idx != corr_idx {
             let first_author_id = ids[first_idx as usize];
             let corr_author_id = ids[corr_idx as usize];
@@ -348,6 +353,10 @@ impl Neo4jRepo {
 
     pub async fn add_keywords_batch(&self, keywords: &[(String, String)], paper_id: &str) -> Result<(), AppError> {
         let n = keywords.len();
+        if n == 0 {
+            return Ok(());
+        }
+
         let mut ids = Vec::with_capacity(n);
         let mut names = Vec::with_capacity(n);
 
