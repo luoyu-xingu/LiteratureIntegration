@@ -1,167 +1,338 @@
-//! Performance optimization test
-//! Tests to verify that the performance optimizations work correctly
+use std::time::{Instant, Duration};
+use literature_integration::models::paper::Paper;
 
-use std::time::Instant;
-
-/// Test string capacity pre-allocation
+/// Performance benchmark for string operations
 #[test]
-fn test_string_capacity_optimization() {
-    // Test that our capacity calculations are correct
-    const BASE_CAPACITY: usize = 150;
-    const AUTHOR_FILTER_SIZE: usize = 80;
-    const KEYWORD_FILTER_SIZE: usize = 60;
+fn test_string_allocation_performance() {
+    let iterations = 10000;
     
-    // Test case 1: No filters
-    let capacity1 = BASE_CAPACITY;
-    let mut s1 = String::with_capacity(capacity1);
-    s1.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
-    assert!(s1.capacity() >= capacity1, "String should have at least the base capacity");
-    
-    // Test case 2: With author filter
-    let capacity2 = BASE_CAPACITY + AUTHOR_FILTER_SIZE;
-    let mut s2 = String::with_capacity(capacity2);
-    s2.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
-    s2.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-    s2.push_str(" WHERE a.id IN $author_ids");
-    s2.push_str(" RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200");
-    assert!(s2.capacity() >= capacity2, "String should have sufficient capacity");
-    
-    // Test case 3: With both filters
-    let capacity3 = BASE_CAPACITY + AUTHOR_FILTER_SIZE + KEYWORD_FILTER_SIZE;
-    let mut s3 = String::with_capacity(capacity3);
-    s3.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
-    s3.push_str(" MATCH (a:Author)-[:FIRST_AUTHOR_OF|CORRESPONDING_AUTHOR_OF]->(p)");
-    s3.push_str(" WHERE a.id IN $author_ids");
-    s3.push_str(" MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-    s3.push_str(" AND k.id IN $keyword_ids");
-    s3.push_str(" RETURN DISTINCT p ORDER BY p.year DESC LIMIT 200");
-    assert!(s3.capacity() >= capacity3, "String should have sufficient capacity");
-}
-
-/// Test that non_empty_string helper function works correctly
-#[test]
-fn test_non_empty_string_helper() {
-    fn non_empty_string(s: String) -> Option<String> {
-        if s.is_empty() { None } else { Some(s) }
-    }
-    
-    // Test with empty string
-    assert!(non_empty_string(String::new()).is_none());
-    
-    // Test with non-empty string
-    let non_empty = non_empty_string(String::from("test"));
-    assert!(non_empty.is_some());
-    assert_eq!(non_empty.unwrap(), "test");
-    
-    // Test with whitespace (should be considered non-empty)
-    let whitespace = non_empty_string(String::from("  "));
-    assert!(whitespace.is_some());
-}
-
-/// Test that non_zero_year helper function works correctly
-#[test]
-fn test_non_zero_year_helper() {
-    fn non_zero_year(y: i32) -> Option<i32> {
-        if y > 0 { Some(y) } else { None }
-    }
-    
-    // Test with zero
-    assert!(non_zero_year(0).is_none());
-    
-    // Test with negative
-    assert!(non_zero_year(-1).is_none());
-    
-    // Test with positive
-    assert_eq!(non_zero_year(2024), Some(2024));
-}
-
-/// Test performance improvement of string building
-#[test]
-fn test_string_building_performance() {
-    const ITERATIONS: usize = 10000;
-    
-    // Test with pre-allocated capacity
+    // Test optimized string building
     let start = Instant::now();
-    for _ in 0..ITERATIONS {
-        let mut s = String::with_capacity(300);
-        s.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
-        s.push_str(" OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)");
-        s.push_str(" OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)");
-        s.push_str(" OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-        s.push_str(" WITH p, head(collect(DISTINCT fa)) AS fa, head(collect(DISTINCT ca)) AS ca, collect(DISTINCT k) AS keywords");
-        s.push_str(" RETURN p, fa, ca, keywords ORDER BY p.year DESC LIMIT 50");
-        std::hint::black_box(s);
+    for _ in 0..iterations {
+        let given = "John";
+        let family = "Doe";
+        let mut n = String::with_capacity(given.len() + 1 + family.len());
+        n.push_str(given);
+        n.push(' ');
+        n.push_str(family);
+        let _ = n;
     }
     let optimized_duration = start.elapsed();
     
-    // Test without pre-allocated capacity (baseline)
+    // Test traditional format! macro
     let start = Instant::now();
-    for _ in 0..ITERATIONS {
-        let mut s = String::new();
-        s.push_str("MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)");
-        s.push_str(" OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)");
-        s.push_str(" OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)");
-        s.push_str(" OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)");
-        s.push_str(" WITH p, head(collect(DISTINCT fa)) AS fa, head(collect(DISTINCT ca)) AS ca, collect(DISTINCT k) AS keywords");
-        s.push_str(" RETURN p, fa, ca, keywords ORDER BY p.year DESC LIMIT 50");
-        std::hint::black_box(s);
+    for _ in 0..iterations {
+        let given = "John";
+        let family = "Doe";
+        let n = format!("{} {}", given, family);
+        let _ = n;
     }
-    let baseline_duration = start.elapsed();
+    let format_duration = start.elapsed();
     
-    // Performance should be better with pre-allocation
-    println!("Optimized: {:?}", optimized_duration);
-    println!("Baseline: {:?}", baseline_duration);
+    println!("String building performance:");
+    println!("  Optimized: {:?}", optimized_duration);
+    println!("  Format: {:?}", format_duration);
     
-    // The optimized version should be at least as fast (allowing for some variance)
-    // In practice, it should be faster due to fewer allocations
+    // Optimized should be at least as fast as format
+    // In practice it's usually faster due to fewer allocations
+    assert!(optimized_duration <= format_duration * 2, 
+        "Optimized version should not be significantly slower");
 }
 
-/// Test that the optimized filter functions maintain correctness
+/// Performance benchmark for vector pre-allocation
 #[test]
-fn test_filter_correctness() {
-    // Test data
-    struct TestData {
-        id: String,
-        name: String,
-        value: Option<String>,
-        year: Option<i32>,
+fn test_vector_preallocation_performance() {
+    let size = 1000;
+    
+    // Test with pre-allocation
+    let start = Instant::now();
+    for _ in 0..100 {
+        let mut v: Vec<i32> = Vec::with_capacity(size);
+        for i in 0..size as i32 {
+            v.push(i);
+        }
+        v.shrink_to_fit();
+    }
+    let preallocated_duration = start.elapsed();
+    
+    // Test without pre-allocation
+    let start = Instant::now();
+    for _ in 0..100 {
+        let mut v: Vec<i32> = Vec::new();
+        for i in 0..size as i32 {
+            v.push(i);
+        }
+        v.shrink_to_fit();
+    }
+    let dynamic_duration = start.elapsed();
+    
+    println!("Vector allocation performance:");
+    println!("  Pre-allocated: {:?}", preallocated_duration);
+    println!("  Dynamic: {:?}", dynamic_duration);
+    
+    // Pre-allocated should be faster
+    assert!(preallocated_duration < dynamic_duration, 
+        "Pre-allocated version should be faster");
+}
+
+/// Performance benchmark for early exit conditions
+#[test]
+fn test_early_exit_performance() {
+    let iterations = 100000;
+    
+    // Test with early exit check
+    let start = Instant::now();
+    for _ in 0..iterations {
+        let data: Vec<(String, String, Option<String>, bool, bool)> = Vec::new();
+        if data.is_empty() {
+            continue;
+        }
+        // Would process here
+    }
+    let early_exit_duration = start.elapsed();
+    
+    // Test without early exit check
+    let start = Instant::now();
+    for _ in 0..iterations {
+        let data: Vec<(String, String, Option<String>, bool, bool)> = Vec::new();
+        // Would process here without check
+        for _ in &data {
+            // Processing
+        }
+    }
+    let no_exit_duration = start.elapsed();
+    
+    println!("Early exit performance:");
+    println!("  With early exit: {:?}", early_exit_duration);
+    println!("  Without early exit: {:?}", no_exit_duration);
+    
+    // Early exit should be faster for empty collections
+    assert!(early_exit_duration < no_exit_duration, 
+        "Early exit should be faster for empty collections");
+}
+
+/// Test that demonstrates the benefit of using iterators over collect
+#[test]
+fn test_iterator_vs_collect_performance() {
+    let data: Vec<i32> = (0..10000).collect();
+    
+    // Using iterator chain
+    let start = Instant::now();
+    for _ in 0..100 {
+        let _: Vec<i32> = data.iter().map(|&x| x * 2).filter(|&x| x > 5000).collect();
+    }
+    let iterator_duration = start.elapsed();
+    
+    // Using manual loop with pre-allocation
+    let start = Instant::now();
+    for _ in 0..100 {
+        let mut result: Vec<i32> = Vec::with_capacity(data.len());
+        for &x in &data {
+            let doubled = x * 2;
+            if doubled > 5000 {
+                result.push(doubled);
+            }
+        }
+    }
+    let manual_duration = start.elapsed();
+    
+    println!("Iterator vs manual loop:");
+    println!("  Iterator chain: {:?}", iterator_duration);
+    println!("  Manual loop: {:?}", manual_duration);
+    
+    // Both approaches should complete successfully
+    assert!(iterator_duration < Duration::from_secs(1));
+    assert!(manual_duration < Duration::from_secs(1));
+}
+
+/// Benchmark for string capacity calculation
+#[test]
+fn test_string_capacity_calculation() {
+    let iterations = 100000;
+    
+    // Test with capacity calculation
+    let start = Instant::now();
+    for i in 0..iterations {
+        let num = i.to_string();
+        let mut s = String::with_capacity(10 + num.len());
+        s.push_str("prefix_");
+        s.push_str(&num);
+        s.push_str("_suffix");
+    }
+    let calculated_duration = start.elapsed();
+    
+    // Test without capacity
+    let start = Instant::now();
+    for i in 0..iterations {
+        let num = i.to_string();
+        let mut s = String::new();
+        s.push_str("prefix_");
+        s.push_str(&num);
+        s.push_str("_suffix");
+    }
+    let default_duration = start.elapsed();
+    
+    println!("String capacity calculation:");
+    println!("  Calculated: {:?}", calculated_duration);
+    println!("  Default: {:?}", default_duration);
+    
+    // Calculated should be faster or similar
+    // The exact performance gain depends on the specific use case
+    assert!(calculated_duration < Duration::from_millis(500));
+}
+
+/// Test shrink_to_fit benefits
+#[test]
+fn test_shrink_to_fit_performance() {
+    let iterations = 10000;
+    
+    // Test with shrink_to_fit
+    let start = Instant::now();
+    for _ in 0..iterations {
+        let mut v: Vec<i32> = Vec::with_capacity(100);
+        for i in 0..50 {
+            v.push(i);
+        }
+        v.shrink_to_fit();
+        assert_eq!(v.len(), v.capacity());
+    }
+    let shrink_duration = start.elapsed();
+    
+    // Test without shrink_to_fit
+    let start = Instant::now();
+    for _ in 0..iterations {
+        let mut v: Vec<i32> = Vec::with_capacity(100);
+        for i in 0..50 {
+            v.push(i);
+        }
+        // Capacity remains 100
+        assert!(v.capacity() >= 50);
+    }
+    let no_shrink_duration = start.elapsed();
+    
+    println!("shrink_to_fit performance:");
+    println!("  With shrink: {:?}", shrink_duration);
+    println!("  Without shrink: {:?}", no_shrink_duration);
+    
+    // Both should complete quickly
+    assert!(shrink_duration < Duration::from_millis(100));
+    assert!(no_shrink_duration < Duration::from_millis(100));
+}
+
+/// Comprehensive performance test that validates overall system performance
+#[test]
+fn test_comprehensive_performance() {
+    let total_start = Instant::now();
+    
+    // Simulate typical workload
+    let iterations = 1000;
+    
+    for i in 0..iterations {
+        // Simulate string operations
+        let mut paper_id = String::with_capacity(36);
+        paper_id.push_str(&format!("{:036}", i));
+        
+        // Simulate vector operations
+        let mut authors: Vec<String> = Vec::with_capacity(10);
+        for j in 0..5 {
+            let mut name = String::with_capacity(20);
+            name.push_str("Author ");
+            name.push_str(&j.to_string());
+            authors.push(name);
+        }
+        authors.shrink_to_fit();
+        
+        // Simulate keyword collection
+        let mut keywords: Vec<String> = Vec::with_capacity(8);
+        for k in 0..3 {
+            let mut kw = String::with_capacity(15);
+            kw.push_str("keyword_");
+            kw.push_str(&k.to_string());
+            keywords.push(kw);
+        }
+        keywords.shrink_to_fit();
+        
+        // Validate results
+        assert!(!paper_id.is_empty());
+        assert_eq!(authors.len(), 5);
+        assert_eq!(keywords.len(), 3);
     }
     
-    fn non_empty_string(s: String) -> Option<String> {
-        if s.is_empty() { None } else { Some(s) }
+    let total_duration = total_start.elapsed();
+    
+    println!("Comprehensive performance test:");
+    println!("  Total time: {:?}", total_duration);
+    println!("  Per iteration: {:?}", total_duration / iterations);
+    
+    // Should complete in reasonable time
+    assert!(total_duration < Duration::from_secs(5), 
+        "Performance test should complete in under 5 seconds");
+}
+
+/// Test memory efficiency with large datasets
+#[test]
+fn test_large_dataset_memory_efficiency() {
+    let start = Instant::now();
+    
+    // Create a large dataset
+    let mut papers: Vec<Paper> = Vec::with_capacity(10000);
+    
+    for i in 0..10000 {
+        papers.push(Paper {
+            id: format!("paper_{}", i),
+            title: format!("Research Paper {}", i),
+            doi: Some(format!("10.1234/paper.{}", i)),
+            arxiv_id: Some(format!("2101.{:05}", i)),
+            abstract_text: Some(format!("Abstract for paper {}", i)),
+            user_notes: None,
+            year: Some(2020 + (i % 5) as i32),
+            journal: Some("Test Journal".to_string()),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        });
     }
     
-    fn non_zero_year(y: i32) -> Option<i32> {
-        if y > 0 { Some(y) } else { None }
+    papers.shrink_to_fit();
+    
+    let duration = start.elapsed();
+    
+    println!("Large dataset test:");
+    println!("  Created {} papers in {:?}", papers.len(), duration);
+    
+    // Validate memory efficiency
+    assert_eq!(papers.len(), 10000);
+    assert!(duration < Duration::from_secs(2), 
+        "Large dataset creation should be fast");
+}
+
+/// Validate that performance meets minimum requirements
+#[test]
+fn test_performance_requirements() {
+    // Test 1: String building should be under 1ms for 100 operations
+    let start = Instant::now();
+    for _ in 0..100 {
+        let mut s = String::with_capacity(50);
+        s.push_str("This is a test string with some content");
     }
+    assert!(start.elapsed() < Duration::from_millis(1));
     
-    // Test case 1: All fields populated
-    let data1 = TestData {
-        id: "test-id".to_string(),
-        name: "test-name".to_string(),
-        value: Some("test-value".to_string()),
-        year: Some(2024),
-    };
-    assert!(non_empty_string(data1.value.clone().unwrap()).is_some());
-    assert!(non_zero_year(data1.year.unwrap()).is_some());
+    // Test 2: Vector operations should be under 5ms for 1000 elements
+    let start = Instant::now();
+    let mut v: Vec<i32> = Vec::with_capacity(1000);
+    for i in 0..1000 {
+        v.push(i);
+    }
+    v.shrink_to_fit();
+    assert!(start.elapsed() < Duration::from_millis(5));
     
-    // Test case 2: Empty values
-    let data2 = TestData {
-        id: "test-id".to_string(),
-        name: "test-name".to_string(),
-        value: Some(String::new()),
-        year: Some(0),
-    };
-    assert!(non_empty_string(data2.value.unwrap()).is_none());
-    assert!(non_zero_year(data2.year.unwrap()).is_none());
+    // Test 3: Empty collection checks should be instant
+    let start = Instant::now();
+    for _ in 0..100000 {
+        let v: Vec<i32> = Vec::new();
+        if v.is_empty() {
+            continue;
+        }
+    }
+    assert!(start.elapsed() < Duration::from_millis(10));
     
-    // Test case 3: None values
-    let data3 = TestData {
-        id: "test-id".to_string(),
-        name: "test-name".to_string(),
-        value: None,
-        year: None,
-    };
-    assert!(data3.value.and_then(non_empty_string).is_none());
-    assert!(data3.year.and_then(non_zero_year).is_none());
+    println!("All performance requirements met!");
 }

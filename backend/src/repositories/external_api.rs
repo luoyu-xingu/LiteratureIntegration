@@ -92,7 +92,12 @@ impl ExternalApiClient {
     }
 
     async fn fetch_by_doi(&self, doi: &str) -> Result<PaperMeta, AppError> {
-        let url = format!("https://api.crossref.org/works/{}", doi);
+        // Pre-calculate URL capacity: base URL length + doi length
+        let base_len = 28; // "https://api.crossref.org/works/"
+        let mut url = String::with_capacity(base_len + doi.len());
+        url.push_str("https://api.crossref.org/works/");
+        url.push_str(doi);
+
         let resp = self
             .client
             .get(&url)
@@ -157,7 +162,8 @@ impl ExternalApiClient {
             }
         }
 
-        let keywords = work.subject.unwrap_or_default();
+        let mut keywords = work.subject.unwrap_or_default();
+        keywords.shrink_to_fit();
         let journal = work.container_title.and_then(|t| t.into_iter().next());
 
         Ok(PaperMeta {
@@ -173,7 +179,12 @@ impl ExternalApiClient {
     }
 
     async fn fetch_by_arxiv(&self, arxiv_id: &str) -> Result<PaperMeta, AppError> {
-        let url = format!("http://export.arxiv.org/api/query?id_list={}", arxiv_id);
+        // Pre-calculate URL capacity: base URL length + arxiv_id length
+        let base_len = 38; // "http://export.arxiv.org/api/query?id_list="
+        let mut url = String::with_capacity(base_len + arxiv_id.len());
+        url.push_str("http://export.arxiv.org/api/query?id_list=");
+        url.push_str(arxiv_id);
+
         let resp = self
             .client
             .get(&url)
@@ -199,16 +210,15 @@ impl ExternalApiClient {
 
         let author_names = extract_xml_tags(&body, "name");
         let total = author_names.len();
-        let authors: Vec<AuthorMeta> = author_names
-            .into_iter()
-            .enumerate()
-            .map(|(i, name)| AuthorMeta {
+        let mut authors: Vec<AuthorMeta> = Vec::with_capacity(total);
+        for (i, name) in author_names.into_iter().enumerate() {
+            authors.push(AuthorMeta {
                 name,
                 orcid: None,
                 is_first: i == 0,
                 is_corresponding: i == total - 1,
-            })
-            .collect();
+            });
+        }
 
         Ok(PaperMeta {
             title,
