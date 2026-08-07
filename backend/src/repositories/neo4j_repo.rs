@@ -511,7 +511,7 @@ impl Neo4jRepo {
 
             let first_author = first_author.map(|n| author_from_node(&n));
             let corresponding_author = corresponding_author.map(|n| author_from_node(&n));
-            let keywords: Vec<_> = keyword_nodes.iter().map(keyword_from_node).collect();
+            let keywords: Vec<_> = keyword_nodes.into_iter().map(|n| keyword_from_node(&n)).collect();
 
             Ok(Some((paper_from_node(&paper_node), first_author, corresponding_author, keywords)))
         } else {
@@ -581,8 +581,8 @@ impl Neo4jRepo {
 
         let mut result = run_query!(self, query);
         if let Some(row) = result.next().await? {
-            let mut nodes: Vec<crate::models::dto::GraphNode> = row.get("nodes_list").unwrap_or_default();
-            let mut links: Vec<crate::models::dto::GraphLink> = row.get("links_list").unwrap_or_default();
+            let nodes: Vec<crate::models::dto::GraphNode> = row.get("nodes_list").unwrap_or_default();
+            let links: Vec<crate::models::dto::GraphLink> = row.get("links_list").unwrap_or_default();
             Ok((nodes, links))
         } else {
             Ok((Vec::with_capacity(DEFAULT_GRAPH_NODES_CAPACITY), Vec::with_capacity(DEFAULT_GRAPH_LINKS_CAPACITY)))
@@ -725,7 +725,7 @@ impl Neo4jRepo {
 
             let first_author = first_author.map(|n| author_from_node(&n));
             let corresponding_author = corresponding_author.map(|n| author_from_node(&n));
-            let keywords: Vec<_> = keyword_nodes.iter().map(keyword_from_node).collect();
+            let keywords: Vec<_> = keyword_nodes.into_iter().map(|n| keyword_from_node(&n)).collect();
 
             papers_detail.push((paper_from_node(&paper_node), first_author, corresponding_author, keywords));
         }
