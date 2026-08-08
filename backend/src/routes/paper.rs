@@ -2,7 +2,7 @@ use axum::{extract::{Path, State, Query}, Json};
 use neo4rs::Graph;
 use serde::Deserialize;
 use crate::errors::AppError;
-use crate::models::dto::{ImportPaperRequest, UpdatePaperRequest, PaperDetailResponse};
+use crate::models::dto::{ImportPaperRequest, UpdatePaperRequest, PaperDetailResponse, RemovedResponse};
 use crate::models::paper::Paper;
 use crate::repositories::neo4j_repo::Neo4jRepo;
 use crate::services::paper::PaperService;
@@ -59,8 +59,9 @@ pub async fn update_paper(
 pub async fn delete_paper(
     State(graph): State<Graph>,
     Query(params): Query<DeletePaperQuery>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<RemovedResponse>, AppError> {
     let repo = Neo4jRepo::new(graph);
     PaperService::remove_from_workspace(&repo, &params.workspace_id, &params.paper_id).await?;
-    Ok(Json(serde_json::json!({"removed": true})))
+    // 直接序列化类型化结构体，输出 `{"removed":true}`，避免 serde_json::json! 的中间 Value 分配
+    Ok(Json(RemovedResponse { removed: true }))
 }
