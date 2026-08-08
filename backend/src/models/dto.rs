@@ -72,6 +72,32 @@ pub struct AuthorWithPapers {
     pub papers: Vec<super::paper::Paper>,
 }
 
+/// 简单布尔响应体。直接通过 serde 序列化为 `{"removed":true}`，
+/// 避免使用 `serde_json::json!` 构造中间 `Value` 树再二次序列化的开销。
+#[derive(Debug, Serialize)]
+pub struct RemovedResponse {
+    pub removed: bool,
+}
+
+/// 与 `RemovedResponse` 同理，用于工作区删除等 `{"deleted":true}` 响应。
+#[derive(Debug, Serialize)]
+pub struct DeletedResponse {
+    pub deleted: bool,
+}
+
+/// 错误响应体，结构与原 `json!({ "error": { "code", "message" } })` 完全一致，
+/// 但避免中间 `Value` 分配。`code` 为静态字符串，`message` 为已拥有的 String。
+#[derive(Debug, Serialize)]
+pub struct ErrorResponse {
+    pub error: ErrorBody,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ErrorBody {
+    pub code: &'static str,
+    pub message: String,
+}
+
 /// Typed search response. Serialized directly via serde instead of building a
 /// `serde_json::Value` tree (which `serde_json::json!` does), avoiding a full
 /// intermediate Value allocation + re-serialization pass.

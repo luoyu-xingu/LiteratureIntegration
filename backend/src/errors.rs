@@ -1,6 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use serde_json::json;
+use crate::models::dto::{ErrorResponse, ErrorBody};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
@@ -41,7 +41,11 @@ impl IntoResponse for AppError {
             AppError::ExternalApiError(_) => (StatusCode::BAD_GATEWAY, "EXTERNAL_API_ERROR", self.to_string()),
             AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Internal server error".into()),
         };
-        let body = json!({ "error": { "code": code, "message": message } });
+        // 使用类型化结构体直接序列化，避免 serde_json::json! 构造中间 Value 树
+        // (Map + 两个 String 键) 再二次序列化的开销。输出字节与原实现完全一致。
+        let body = ErrorResponse {
+            error: ErrorBody { code, message },
+        };
         (status, axum::Json(body)).into_response()
     }
 }
