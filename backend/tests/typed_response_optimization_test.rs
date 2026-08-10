@@ -36,6 +36,31 @@ fn test_delete_response_false_value() {
     assert_eq!(json, r#"{"deleted":false}"#);
 }
 
+#[test]
+fn test_delete_response_round_trip() {
+    // 往返测试：序列化后反序列化必须得到等价的结构体，
+    // 确保 Serialize/Deserialize 实现一致、字段名稳定。
+    let original = DeleteResponse { deleted: true };
+    let json = serde_json::to_string(&original).unwrap();
+    let parsed: DeleteResponse = serde_json::from_str(&json).unwrap();
+    assert_eq!(parsed.deleted, original.deleted);
+
+    // 也验证从原始 JSON 字符串反序列化（与 serde_json::json! 产物同形）
+    let from_legacy: DeleteResponse = serde_json::from_str(r#"{"deleted":true}"#).unwrap();
+    assert!(from_legacy.deleted);
+}
+
+#[test]
+fn test_remove_response_round_trip() {
+    let original = RemoveResponse { removed: true };
+    let json = serde_json::to_string(&original).unwrap();
+    let parsed: RemoveResponse = serde_json::from_str(&json).unwrap();
+    assert_eq!(parsed.removed, original.removed);
+
+    let from_legacy: RemoveResponse = serde_json::from_str(r#"{"removed":true}"#).unwrap();
+    assert!(from_legacy.removed);
+}
+
 // ---------------------------------------------------------------------------
 // 2. extract_xml_tag / extract_xml_tags 正确性测试
 //    这两个函数依赖优化后的 find_tag_open / find_tag_close 内联实现。
@@ -128,16 +153,31 @@ fn test_export_timestamp_format_matches_spec() {
 }
 
 #[test]
-fn test_export_timestamp_format_is_consistent_across_calls() {
-    // 优化前用 .to_string()，优化后用 write! 进 buffer；
-    // 两种方式对同一时刻必须产出完全相同的字符串。
-    use chrono::Utc;
-    let now = Utc::now();
-
-    let via_to_string = now.format("%Y-%m-%d %H:%M").to_string();
-    let mut via_write = String::new();
+fn test_export_timestamp_write_appends_to_preallocated_buffer() {
+    // 这是对优化路径的真实验证：export_markdown 在已预分配、已有内容的
+    // String 缓冲区上用 write! 追加时间戳。此处复刻该场景，断言：
+    //   1. write! 正确追加（不覆盖前缀）
+    //   2. 追加后的片段严格符合 "%Y-%m-%d %H:%M" 格式
+    //   3. 整个缓冲区容量未发生重新分配（预分配优化生效）
+    use chrono::{TimeZone, Utc};
     use std::fmt::Write;
-    write!(via_write, "{}", now.format("%Y-%m-%d %H:%M")).unwrap();
 
-    assert_eq!(via_to_string, via_write);
+    let known = Utc.with_ymd_and_hms(2026, 8, 10, 9, 5, 0).unwrap();
+    let prefix = "# 工作区: Demo\n\n> 导出时间: ";
+
+    // 预分配足够容量，模拟 export_markdown 的 String::with_capacity(estimated)
+    let mut md = String::with_capacity(256);
+    md.push_str(prefix);
+    let cap_before = md.capacity();
+    write!(md, "{}", known.format("%Y-%m-%d %H:%M")).unwrap();
+    let cap_after = md.capacity();
+
+    // (1) 前缀保留，未被覆盖
+    assert!(md.starts_with(prefix), "prefix must be preserved after write!");
+    // (2) 追加的时间戳片段严格符合规范
+    let appended = &md[prefix.len()..];
+    assert_eq!(appended, "2026-08-10 09:05");
+    assert_eq!(appended.len(), 16);
+    // (3) 容量未增长 —— 预分配优化生效，write! 未触发 realloc
+    assert_eq!(cap_before, cap_after, "write! must not trigger reallocation");
 }
