@@ -72,6 +72,22 @@ pub struct AuthorWithPapers {
     pub papers: Vec<super::paper::Paper>,
 }
 
+/// Typed delete-result envelope. Serialized directly via serde instead of
+/// building a `serde_json::Value` tree (which `serde_json::json!` does),
+/// avoiding an intermediate `Map<String, Value>` + `Value::Object` allocation
+/// and the dynamic-dispatch cost of serializing a `Value` tree.
+#[derive(Debug, Serialize)]
+pub struct DeleteResponse {
+    pub deleted: bool,
+}
+
+/// Typed remove-result envelope for paper removal from a workspace.
+/// Same rationale as `DeleteResponse`: avoids the `serde_json::Value` tree.
+#[derive(Debug, Serialize)]
+pub struct RemoveResponse {
+    pub removed: bool,
+}
+
 /// Typed search response. Serialized directly via serde instead of building a
 /// `serde_json::Value` tree (which `serde_json::json!` does), avoiding a full
 /// intermediate Value allocation + re-serialization pass.
@@ -93,6 +109,26 @@ pub enum SearchResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_delete_response_serializes_like_json_macro() {
+        // Behavior-equivalence guard: the typed `DeleteResponse` must produce
+        // the exact same JSON that the previous `serde_json::json!({"deleted": true})`
+        // produced, so the optimization is safe to merge.
+        let typed = serde_json::to_string(&DeleteResponse { deleted: true }).unwrap();
+        let legacy = serde_json::to_string(&serde_json::json!({"deleted": true})).unwrap();
+        assert_eq!(typed, legacy);
+        assert_eq!(typed, r#"{"deleted":true}"#);
+    }
+
+    #[test]
+    fn test_remove_response_serializes_like_json_macro() {
+        // Same rationale as above for the paper-removal endpoint.
+        let typed = serde_json::to_string(&RemoveResponse { removed: true }).unwrap();
+        let legacy = serde_json::to_string(&serde_json::json!({"removed": true})).unwrap();
+        assert_eq!(typed, legacy);
+        assert_eq!(typed, r#"{"removed":true}"#);
+    }
 
     #[test]
     fn test_create_workspace_request_deserialization() {
