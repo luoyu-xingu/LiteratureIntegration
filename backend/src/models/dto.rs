@@ -76,14 +76,14 @@ pub struct AuthorWithPapers {
 /// building a `serde_json::Value` tree (which `serde_json::json!` does),
 /// avoiding an intermediate `Map<String, Value>` + `Value::Object` allocation
 /// and the dynamic-dispatch cost of serializing a `Value` tree.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteResponse {
     pub deleted: bool,
 }
 
 /// Typed remove-result envelope for paper removal from a workspace.
 /// Same rationale as `DeleteResponse`: avoids the `serde_json::Value` tree.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RemoveResponse {
     pub removed: bool,
 }
