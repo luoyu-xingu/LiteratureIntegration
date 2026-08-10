@@ -1,6 +1,7 @@
 use crate::errors::AppError;
 use crate::models::dto::ExportRequest;
 use crate::repositories::neo4j_repo::Neo4jRepo;
+use std::fmt::Write as _;
 
 pub struct ExportService;
 
@@ -35,10 +36,13 @@ impl ExportService {
         md.push_str(&workspace.name);
         md.push_str("\n\n> 导出时间: ");
 
-        // Use cached datetime format for better performance
+        // Format the datetime directly into `md` via `write!`. This avoids
+        // allocating an intermediate `String` (and the `DelayedFormat` buffer
+        // that `.to_string()` would materialize) by streaming the formatted
+        // tokens straight into the existing String buffer. `write!` on a
+        // `String` is infallible in practice, so `unwrap()` cannot panic.
         let now = chrono::Utc::now();
-        let dt_str = now.format("%Y-%m-%d %H:%M").to_string();
-        md.push_str(&dt_str);
+        write!(md, "{}", now.format("%Y-%m-%d %H:%M")).unwrap();
         md.push_str("\n> 论文数量: ");
 
         // Reuse a single itoa buffer for all integer-to-string conversions
