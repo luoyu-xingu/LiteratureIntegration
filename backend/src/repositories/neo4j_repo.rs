@@ -491,14 +491,10 @@ impl Neo4jRepo {
         Vec<crate::models::keyword::Keyword>,
     )>, AppError> {
         let cypher = "MATCH (p:Paper {id: $paper_id})
-                      WITH p
-                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
-                      WITH p, head(collect(fa)) AS fa
-                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
-                      WITH p, fa, head(collect(ca)) AS ca
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(k:Keyword)
-                      WITH p, fa, ca, collect(k) AS keywords
-                      RETURN p, fa, ca, keywords";
+                      RETURN p,
+                      [(fa:Author)-[:FIRST_AUTHOR_OF]->(p) | fa][0] AS fa,
+                      [(ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) | ca][0] AS ca,
+                      [(p)-[:HAS_KEYWORD]->(k:Keyword) | k] AS keywords";
         let query = neo4rs::query(cypher)
             .param("paper_id", paper_id);
 
@@ -570,10 +566,8 @@ impl Neo4jRepo {
                            CASE WHEN first_count > 0 AND corr_count > 0 THEN 'both' 
                                 WHEN first_count > 0 THEN 'first' 
                                 ELSE 'corresponding' END AS author_type
-                      WITH collect({id: a.id, name: a.name, paper_count: paper_count, author_type: author_type}) AS nodes_list
-                      OPTIONAL MATCH (a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author)
-                      WHERE a1.id < a2.id
-                      WITH nodes_list, collect({source: a1.id, target: a2.id, paper_count: r.paper_count}) AS links_list
+                      WITH collect({id: a.id, name: a.name, paper_count: paper_count, author_type: author_type}) AS nodes_list,
+                           [(a1:Author)-[r:CO_AUTHOR_OF {workspace_id: $workspace_id}]-(a2:Author) WHERE a1.id < a2.id | {source: a1.id, target: a2.id, paper_count: r.paper_count}] AS links_list
                       RETURN nodes_list, links_list";
 
         let query = neo4rs::query(cypher)
@@ -631,7 +625,7 @@ impl Neo4jRepo {
         while let Some(row) = result.next().await? {
             let author_node: neo4rs::Node = row.get("a")?;
             let paper_nodes: Vec<neo4rs::Node> = row.get("papers")?;
-            let papers: Vec<_> = paper_nodes.iter().map(paper_from_node).collect();
+            let papers: Vec<_> = paper_nodes.into_iter().map(|n| paper_from_node(&n)).collect();
             authors_with_papers.push(crate::models::dto::AuthorWithPapers {
                 author: author_from_node(&author_node),
                 papers,
@@ -685,9 +679,8 @@ impl Neo4jRepo {
         let (min_year, max_year) = year_range.unwrap_or((0, 0));
         let year_filter_active = year_range.is_some();
 
-        // Use EXISTS for early filtering to reduce intermediate result size before collection.
-        // Post-OPTIONAL MATCH WHERE removed: EXISTS subqueries in the first WHERE already
-        // guarantee the matching authors/keywords exist, making the second filter redundant.
+        // Use EXISTS for early filtering + pattern comprehension for efficient collection.
+        // Pattern comprehensions avoid row multiplication from chained OPTIONAL MATCH.
         let cypher = "MATCH (w:Workspace {id: $workspace_id})-[:CONTAINS]->(p:Paper)
                       WHERE ($min_year IS NULL OR p.year >= $min_year)
                         AND ($max_year IS NULL OR p.year <= $max_year)
@@ -696,14 +689,10 @@ impl Neo4jRepo {
                              EXISTS { (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) WHERE ca.id IN $author_ids })
                         AND ($keyword_ids IS NULL OR $keyword_ids = [] OR
                              EXISTS { (p)-[:HAS_KEYWORD]->(kw:Keyword) WHERE kw.id IN $keyword_ids })
-                      WITH p
-                      OPTIONAL MATCH (fa:Author)-[:FIRST_AUTHOR_OF]->(p)
-                      WITH p, head(collect(fa)) AS fa
-                      OPTIONAL MATCH (ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p)
-                      WITH p, fa, head(collect(ca)) AS ca
-                      OPTIONAL MATCH (p)-[:HAS_KEYWORD]->(kw:Keyword)
-                      WITH p, fa, ca, collect(kw) AS keywords
-                      RETURN p, fa, ca, keywords
+                      RETURN p,
+                        [(fa:Author)-[:FIRST_AUTHOR_OF]->(p) | fa][0] AS fa,
+                        [(ca:Author)-[:CORRESPONDING_AUTHOR_OF]->(p) | ca][0] AS ca,
+                        [(p)-[:HAS_KEYWORD]->(kw:Keyword) | kw] AS keywords
                       ORDER BY p.year DESC
                       LIMIT 50";
 
