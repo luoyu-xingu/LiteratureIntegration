@@ -1,7 +1,7 @@
 use axum::{extract::{Path, State}, Json};
 use neo4rs::Graph;
 use crate::errors::AppError;
-use crate::models::dto::{CreateWorkspaceRequest, UpdateWorkspaceRequest};
+use crate::models::dto::{CreateWorkspaceRequest, UpdateWorkspaceRequest, WorkspaceDeletedResponse};
 use crate::models::workspace::Workspace;
 use crate::repositories::neo4j_repo::Neo4jRepo;
 use crate::services::workspace::WorkspaceService;
@@ -45,8 +45,8 @@ pub async fn update_workspace(
 pub async fn delete_workspace(
     State(graph): State<Graph>,
     Path(id): Path<String>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<WorkspaceDeletedResponse>, AppError> {
     let repo = Neo4jRepo::new(graph);
     WorkspaceService::delete(&repo, &id).await?;
-    Ok(Json(serde_json::json!({"deleted": true})))
+    Ok(Json(WorkspaceDeletedResponse { deleted: true }))
 }
