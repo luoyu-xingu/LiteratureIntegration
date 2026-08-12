@@ -90,6 +90,26 @@ pub enum SearchResponse {
     },
 }
 
+/// Typed response for the "remove paper from workspace" endpoint.
+///
+/// Serializing this struct directly via serde avoids the intermediate
+/// `serde_json::Value` tree that `serde_json::json!` would build (one Map +
+/// one Bool allocation) and then re-serialize, saving an allocation plus a
+/// second serialization pass on every delete request. The JSON field name
+/// (`removed`) is part of the public API contract with the frontend.
+#[derive(Debug, Serialize)]
+pub struct PaperRemovedResponse {
+    pub removed: bool,
+}
+
+/// Typed response for the "delete workspace" endpoint. Same rationale as
+/// `PaperRemovedResponse`: avoid the `serde_json::Value` round-trip. The JSON
+/// field name (`deleted`) is part of the public API contract with the frontend.
+#[derive(Debug, Serialize)]
+pub struct WorkspaceDeletedResponse {
+    pub deleted: bool,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -203,5 +223,17 @@ mod tests {
         };
         let json = serde_json::to_string(&awp).unwrap();
         assert!(json.contains("Author"));
+    }
+
+    #[test]
+    fn test_paper_removed_response_serialization() {
+        let json = serde_json::to_string(&PaperRemovedResponse { removed: true }).unwrap();
+        assert_eq!(json, r#"{"removed":true}"#);
+    }
+
+    #[test]
+    fn test_workspace_deleted_response_serialization() {
+        let json = serde_json::to_string(&WorkspaceDeletedResponse { deleted: true }).unwrap();
+        assert_eq!(json, r#"{"deleted":true}"#);
     }
 }
